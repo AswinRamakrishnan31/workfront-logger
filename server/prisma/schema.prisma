@@ -1,0 +1,325 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Projects
+model Project {
+  id                        String   @id @default(uuid())
+  workfrontProjectId        String?  @unique @map("workfront_project_id")
+  workfrontReferenceNumber  String?  @map("workfront_reference_number")
+  projectName               String   @map("project_name")
+  description               String?
+  status                    String   @default("Yet to Start")
+  lob                       String?
+  priority                  String   @default("Normal")
+  requestType               String?  @map("request_type")
+  projectType               String?  @map("project_type")
+  taskComplexity            String?  @map("task_complexity")
+  expectedStartDate         DateTime? @map("expected_start_date")
+  targetDeploymentDate      DateTime? @map("target_deployment_date")
+  actualDeploymentDate      DateTime? @map("actual_deployment_date")
+  deploymentChannel         String?  @map("deployment_channel")
+  audience                  String?
+  coe                       String?
+  requesterName             String?  @map("requester_name")
+  requesterEmail            String?  @map("requester_email")
+  remarks                   String?
+  rawWorkfrontJson          Json?    @map("raw_workfront_json")
+  version                   Int      @default(1)
+  isDeleted                 Boolean  @default(false) @map("is_deleted")
+  deletedAt                 DateTime? @map("deleted_at")
+  deletedBy                 String?  @map("deleted_by")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  createdBy                 String?  @map("created_by")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+  updatedBy                 String?  @map("updated_by")
+
+  tasks     Task[]
+  history   ProjectHistory[]
+
+  @@index([workfrontProjectId])
+  @@index([status])
+  @@index([lob])
+  @@index([priority])
+  @@index([expectedStartDate])
+  @@index([targetDeploymentDate])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+// 2. Tasks
+model Task {
+  id                      String   @id @default(uuid())
+  projectId               String   @map("project_id")
+  workfrontTaskId         String?  @unique @map("workfront_task_id")
+  workfrontTaskReference  String?  @map("workfront_task_reference")
+  taskName                String   @map("task_name")
+  taskType                String?  @map("task_type")
+  taskCategory            String?  @map("task_category")
+  status                  String   @default("Yet to Start")
+  priority                String?
+  complexity              String?
+  plannedHours            Float?   @map("planned_hours")
+  actualHours             Float?   @map("actual_hours")
+  plannedStartDate        DateTime? @map("planned_start_date")
+  plannedEndDate          DateTime? @map("planned_end_date")
+  actualStartDate         DateTime? @map("actual_start_date")
+  actualEndDate           DateTime? @map("actual_end_date")
+  remarks                 String?
+  version                 Int      @default(1)
+  createdAt               DateTime @default(now()) @map("created_at")
+  createdBy               String?  @map("created_by")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+  updatedBy               String?  @map("updated_by")
+
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignments TaskAssignment[]
+  history     TaskHistory[]
+
+  @@index([projectId])
+  @@index([workfrontTaskId])
+  @@index([status])
+  @@map("tasks")
+}
+
+// 3. Resources
+model Resource {
+  id                         String   @id @default(uuid())
+  employeeId                 String?  @unique @map("employee_id")
+  name                       String
+  email                      String?  @unique
+  team                       String?
+  role                       String
+  primarySkill               String?  @map("primary_skill")
+  location                   String?
+  shift                      String?
+  active                     Boolean  @default(true)
+  standardDailyCapacityHours Float    @default(7.5) @map("standard_daily_capacity_hours")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  assignments  TaskAssignment[]
+  capacities   ResourceCapacity[]
+  availability ResourceAvailability[]
+  appUsers     AppUser[]
+
+  @@index([role])
+  @@index([team])
+  @@map("resources")
+}
+
+// 4. Task Assignments
+model TaskAssignment {
+  id                   String   @id @default(uuid())
+  taskId               String   @map("task_id")
+  resourceId           String   @map("resource_id")
+  assignedRole         String   @map("assigned_role")
+  allocatedHours       Float    @map("allocated_hours")
+  allocationStartDate  DateTime? @map("allocation_start_date")
+  allocationEndDate    DateTime? @map("allocation_end_date")
+  assignmentStatus     String   @default("Active") @map("assignment_status")
+  createdAt            DateTime @default(now()) @map("created_at")
+  createdBy            String?  @map("created_by")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  updatedBy            String?  @map("updated_by")
+
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([resourceId])
+  @@map("task_assignments")
+}
+
+// 5. Resource Capacity
+model ResourceCapacity {
+  id                   String   @id @default(uuid())
+  resourceId           String   @map("resource_id")
+  year                 Int
+  month                Int
+  workingDays          Int      @map("working_days")
+  availableHours       Float    @map("available_hours")
+  leaveHours           Float    @default(0) @map("leave_hours")
+  holidayHours         Float    @default(0) @map("holiday_hours")
+  trainingHours        Float    @default(0) @map("training_hours")
+  otherNonProjectHours Float    @default(0) @map("other_non_project_hours")
+  netAvailableHours    Float    @map("net_available_hours")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, year, month])
+  @@map("resource_capacity")
+}
+
+// 6. Resource Availability
+model ResourceAvailability {
+  id               String   @id @default(uuid())
+  resourceId       String   @map("resource_id")
+  date             DateTime
+  availabilityType String   @map("availability_type")
+  hours            Float
+  remarks          String?
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, date])
+  @@map("resource_availability")
+}
+
+// 7. SLA Channels & Rules
+model SlaChannel {
+  id          String   @id @default(uuid())
+  channelName String   @unique @map("channel_name")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  rules SlaRule[]
+
+  @@map("sla_channels")
+}
+
+model SlaRule {
+  id               String   @id @default(uuid())
+  channelId        String   @map("channel_id")
+  requestType      String?  @map("request_type")
+  complexity       String?
+  emailDevHours    Float    @default(0) @map("email_dev_hours")
+  campaignDevHours Float    @default(0) @map("campaign_dev_hours")
+  emailQaHours     Float    @default(0) @map("email_qa_hours")
+  campaignQaHours  Float    @default(0) @map("campaign_qa_hours")
+  totalSlaHours    Float    @map("total_sla_hours")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  channel SlaChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@map("sla_rules")
+}
+
+// 8. Dropdown Configuration
+model DropdownCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  code      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  options DropdownOption[]
+
+  @@map("dropdown_categories")
+}
+
+model DropdownOption {
+  id           String   @id @default(uuid())
+  categoryId   String   @map("category_id")
+  label        String
+  value        String
+  displayOrder Int      @default(0) @map("display_order")
+  active       Boolean  @default(true)
+
+  category DropdownCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("dropdown_options")
+}
+
+// 9. Project & Task Audit History
+model ProjectHistory {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  fieldName String   @map("field_name")
+  oldValue  String?  @map("old_value")
+  newValue  String?  @map("new_value")
+  action    String
+  changedBy String?  @map("changed_by")
+  changedAt DateTime @default(now()) @map("changed_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_history")
+}
+
+model TaskHistory {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  fieldName String   @map("field_name")
+  oldValue  String?  @map("old_value")
+  newValue  String?  @map("new_value")
+  action    String
+  changedBy String?  @map("changed_by")
+  changedAt DateTime @default(now()) @map("changed_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_history")
+}
+
+// 10. Application Users & SSO Management
+model AppUser {
+  id              String    @id @default(uuid())
+  employeeId      String?   @unique @map("employee_id")
+  resourceId      String?   @map("resource_id")
+  name            String
+  email           String    @unique
+  role            String    @default("Viewer")
+  permissionsJson Json?     @map("permissions_json")
+  ssoProvider     String?   @map("sso_provider")
+  ssoSubjectId    String?   @unique @map("sso_subject_id")
+  azureObjectId   String?   @unique @map("azure_object_id")
+  department      String?
+  active          Boolean   @default(true)
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  resource Resource? @relation(fields: [resourceId], references: [id])
+
+  @@index([role])
+  @@index([email])
+  @@map("app_users")
+}
+
+// 11. External Integrations (Workfront API & Webhooks)
+model IntegrationConfig {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  provider        String
+  baseUrl         String?   @map("base_url")
+  apiKey          String?   @map("api_key")
+  oauthClientId   String?   @map("oauth_client_id")
+  oauthSecretEnc  String?   @map("oauth_secret_enc")
+  syncEnabled     Boolean   @default(false) @map("sync_enabled")
+  syncIntervalMin Int      @default(60) @map("sync_interval_min")
+  lastSyncAt      DateTime? @map("last_sync_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  syncLogs IntegrationSyncLog[]
+
+  @@map("integration_configs")
+}
+
+model IntegrationSyncLog {
+  id              String    @id @default(uuid())
+  configId        String    @map("config_id")
+  status          String
+  recordsImported Int       @default(0) @map("records_imported")
+  recordsUpdated  Int       @default(0) @map("records_updated")
+  recordsSkipped  Int       @default(0) @map("records_skipped")
+  recordsFailed   Int       @default(0) @map("records_failed")
+  detailsJson     Json?     @map("details_json")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+
+  config IntegrationConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@map("integration_sync_logs")
+}

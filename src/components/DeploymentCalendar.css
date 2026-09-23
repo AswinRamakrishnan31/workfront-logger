@@ -1,0 +1,185 @@
+.deployment-calendar-module {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dc-header-stats {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.dc-stat-box {
+  flex: 1;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dc-stat-header {
+  background: #1e40af; /* Dark blue from screenshot */
+  color: white;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dc-stat-header.gold {
+  background: #fde047; /* Yellow/Gold */
+  color: #b45309;
+}
+
+.dc-stat-value {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dc-filter-bar {
+  display: flex;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dc-filter-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--surface-border);
+}
+
+.dc-filter-group:last-child {
+  border-right: none;
+}
+
+.dc-filter-label {
+  background: #3b82f6; /* Blue header for filters */
+  color: white;
+  padding: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  font-style: italic;
+}
+
+.dc-filter-select {
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  text-align: center;
+  width: 100%;
+  cursor: pointer;
+}
+
+.dc-filter-select option {
+  background: #1e293b;
+  color: white;
+}
+
+.dc-filter-select:focus {
+  outline: none;
+}
+
+.dc-calendars-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.dc-month-container {
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+}
+
+.dc-month-header {
+  background: #0d9488; /* Teal color from screenshot */
+  color: white;
+  padding: 0.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.dc-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.dc-day-name {
+  padding: 0.4rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-right: 1px solid var(--surface-border);
+}
+
+.dc-day-name.weekend {
+  color: #fb923c; /* Orange for weekends */
+}
+
+.dc-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.dc-day-cell {
+  min-height: 60px;
+  border-right: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dc-day-cell.empty {
+  background: transparent;
+}
+
+.dc-day-number {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.dc-day-stats {
+  font-size: 0.65rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Capacity Colors */
+.dc-day-cell.cap-green {
+  background: rgba(16, 185, 129, 0.2); /* Emerald */
+}
+
+.dc-day-cell.cap-orange {
+  background: rgba(245, 158, 11, 0.3); /* Amber */
+}
+
+.dc-day-cell.cap-red {
+  background: rgba(239, 68, 68, 0.4); /* Red */
+}
+
+.dc-day-number.weekend {
+  color: #fb923c;
+}
