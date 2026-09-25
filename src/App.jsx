@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, LayoutGrid, Table, Briefcase, BarChart2, Users, Sliders, LogIn, User, Layers } from 'lucide-react';
+import { PlusCircle, LayoutGrid, Table, Briefcase, BarChart2, Users, Sliders, LogIn, User, Layers, LayoutDashboard } from 'lucide-react';
+import MyDashboard from './components/MyDashboard';
 import ProjectForm from './components/ProjectForm';
 import ProjectGrid from './components/ProjectGrid';
 import SLAMasterModule from './components/SLAMasterModule';
@@ -17,7 +18,7 @@ import migrationApi from './api/migrationApi';
 import './App.css';
 
 function MainApp() {
-  const [view, setView] = useState('deploymentCalendar');
+  const [view, setView] = useState('myDashboard');
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -197,6 +198,14 @@ function MainApp() {
         </div>
 
         <nav className="sidebar-nav">
+          <button 
+            className={view === 'myDashboard' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setView('myDashboard')}
+          >
+            <LayoutDashboard size={18} />
+            My Dashboard
+          </button>
+
           {permissions.canLogProjects && (
             <button 
               className={view === 'form' ? 'btn-primary' : 'btn-secondary'}
@@ -291,6 +300,7 @@ function MainApp() {
       </aside>
 
       <main className="main-content">
+        {view === 'myDashboard' && <MyDashboard projects={projects} onUpdateProject={handleUpdateProject} />}
         {view === 'form' && permissions.canLogProjects && <ProjectForm onAddProject={handleAddProject} projects={projects} />}
         {view === 'grid' && <ProjectGrid projects={projects} onUpdateProject={handleUpdateProject} onBulkAddProjects={handleBulkAddProjects} onClearProjects={handleClearProjects} onDeleteProjects={handleDeleteProjects} />}
         {view === 'staging' && <StagingQueue projects={projects} onUpdateProject={handleUpdateProject} onDeleteProjects={handleDeleteProjects} onBulkAddProjects={handleBulkAddProjects} />}

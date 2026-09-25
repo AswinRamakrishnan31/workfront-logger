@@ -1,0 +1,449 @@
+.my-dashboard-container {
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  color: #f8fafc;
+}
+
+/* Header Banner */
+.dashboard-header-banner {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+.dashboard-user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.4rem;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
+.greeting-text h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.greeting-text p {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* Scope Selector Tabs */
+.scope-selector-bar {
+  display: flex;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 0.35rem;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  gap: 0.35rem;
+}
+
+.scope-tab-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.55rem 1rem;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.2s ease;
+}
+
+.scope-tab-btn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.scope-tab-btn.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+
+/* Quick User Switcher */
+.user-switch-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid #334155;
+  padding: 0.4rem 0.75rem;
+  border-radius: 10px;
+}
+
+.user-switch-select {
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 0.88rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.user-switch-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Stat Summary Cards */
+.stats-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card-mini {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-info .stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.stat-info .stat-lbl {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.35rem;
+  font-weight: 500;
+}
+
+/* Calendar Section */
+.dashboard-calendar-card {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.calendar-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.calendar-header-title h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-month-display {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #818cf8;
+  min-width: 150px;
+  text-align: center;
+}
+
+.calendar-grid-month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-weekday-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  padding: 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.calendar-day-cell {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  min-height: 85px;
+  padding: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  justify: space-between;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.calendar-day-cell:hover {
+  border-color: #6366f1;
+  background: #283548;
+}
+
+.calendar-day-cell.other-month {
+  opacity: 0.35;
+}
+
+.calendar-day-cell.today {
+  border: 2px solid #818cf8;
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.calendar-day-cell.selected {
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.day-number {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.day-tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.calendar-task-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.task-pill-dev { background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+.task-pill-qa { background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.task-pill-urgent { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+.task-pill-done { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+/* Main Grid & Outstanding Split Layout */
+.dashboard-main-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1200px) {
+  .dashboard-main-split {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
+/* Assigned Tasks Section */
+.tasks-panel-card {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.tasks-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tasks-panel-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Project Cards List */
+.project-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.dash-project-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.1rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.dash-project-card:hover {
+  border-color: #6366f1;
+  transform: translateY(-2px);
+}
+
+.dash-project-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+}
+
+.dash-project-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 0.2rem 0;
+}
+
+.dash-project-meta {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dash-role-assigned-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.role-tag-pill {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+}
+
+.role-tag-pill.my-assigned {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: #818cf8;
+  color: #c7d2fe;
+  font-weight: 700;
+}
+
+/* Outstanding Items Breakdown Panel */
+.outstanding-panel-card {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.outstanding-group-btn {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.outstanding-group-btn.active {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.outstanding-bucket-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.85rem;
+}
+
+.bucket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.bucket-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bucket-count-badge {
+  background: #334155;
+  color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+}
