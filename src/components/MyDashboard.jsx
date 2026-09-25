@@ -9,6 +9,16 @@ import { useDropdowns, ROLE_LABELS } from '../context/DropdownContext';
 import { TEAM_MEMBERS, ALL_RESOURCES } from '../constants';
 import './MyDashboard.css';
 
+const formatDateToYYYYMMDD = (d) => {
+  if (!d) return '';
+  const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
+  if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export default function MyDashboard({ projects = [], onUpdateProject, leaves = [] }) {
   const { currentUser, login, userRoles } = useAuth();
   const { options } = useDropdowns();
@@ -19,9 +29,10 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
   // Compute upcoming planned leaves for currentUser
   const userUpcomingLeaves = useMemo(() => {
     if (!currentUserName) return [];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatDateToYYYYMMDD(new Date());
     return (leaves || []).filter(l => {
-      if (l.status === 'Cancelled') return false;
+      if (!l || l.status === 'Cancelled' || !l.memberName) return false;
+      if (typeof l.memberName !== 'string' || typeof currentUserName !== 'string') return false;
       if (l.memberName.toLowerCase() !== currentUserName.toLowerCase()) return false;
       const lEnd = l.endDate || l.startDate;
       return lEnd >= todayStr;
@@ -30,8 +41,11 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
 
   // Determine user sub-team / role key
   const userSubRoleKey = useMemo(() => {
+    if (!teamMembersMap || typeof teamMembersMap !== 'object') return 'emailDeveloper';
     for (const [rKey, list] of Object.entries(teamMembersMap)) {
-      if (list.includes(currentUserName)) return rKey;
+      if (Array.isArray(list) && list.some(item => typeof item === 'string' && item.toLowerCase() === currentUserName.toLowerCase())) {
+        return rKey;
+      }
     }
     return 'emailDeveloper'; // default fallback
   }, [teamMembersMap, currentUserName]);
@@ -141,7 +155,7 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
 
   // Key KPI Stats
   const stats = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatDateToYYYYMMDD(new Date());
     let totalAssigned = scopedProjects.length;
     let activeCount = 0;
     let overdueCount = 0;
@@ -164,15 +178,13 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
 
   // Outstanding / Unclosed Items Breakdown for PM & SPOCs
   const outstandingBuckets = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
     const todayDate = new Date();
-    const tomorrowDate = new Date(todayDate);
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
+    const todayStr = formatDateToYYYYMMDD(todayDate);
+    const tomorrowDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() + 1);
+    const tomorrowStr = formatDateToYYYYMMDD(tomorrowDate);
 
-    const weekLaterDate = new Date(todayDate);
-    weekLaterDate.setDate(weekLaterDate.getDate() + 7);
-    const weekLaterStr = weekLaterDate.toISOString().split('T')[0];
+    const weekLaterDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() + 7);
+    const weekLaterStr = formatDateToYYYYMMDD(weekLaterDate);
 
     // Filter to unclosed projects only
     const openProjects = projects.filter(p => 
@@ -241,7 +253,7 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
       const dayNum = prevMonthLastDay - i;
       const d = new Date(year, month - 1, dayNum);
       days.push({
-        dateStr: d.toISOString().split('T')[0],
+        dateStr: formatDateToYYYYMMDD(d),
         dayNum,
         isCurrentMonth: false
       });
@@ -251,7 +263,7 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
     for (let dayNum = 1; dayNum <= totalDaysInMonth; dayNum++) {
       const d = new Date(year, month, dayNum);
       days.push({
-        dateStr: d.toISOString().split('T')[0],
+        dateStr: formatDateToYYYYMMDD(d),
         dayNum,
         isCurrentMonth: true
       });
@@ -262,7 +274,7 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
     for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
       const d = new Date(year, month + 1, dayNum);
       days.push({
-        dateStr: d.toISOString().split('T')[0],
+        dateStr: formatDateToYYYYMMDD(d),
         dayNum,
         isCurrentMonth: false
       });

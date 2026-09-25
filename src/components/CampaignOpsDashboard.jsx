@@ -4,8 +4,16 @@ import { TEAM_MEMBERS } from '../constants';
 import { useDropdowns } from '../context/DropdownContext';
 import './CampaignOpsDashboard.css';
 
+const formatDateToYYYYMMDD = (d) => {
+  if (!d || isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export default function CampaignOpsDashboard({ projects = [] }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatDateToYYYYMMDD(new Date());
   
   const [period, setPeriod] = useState('This Month');
   const [customStartDate, setCustomStartDate] = useState('');
@@ -17,15 +25,18 @@ export default function CampaignOpsDashboard({ projects = [] }) {
     const date = new Date();
     
     if (period === 'This Month') {
-      start = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-      end = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+      start = formatDateToYYYYMMDD(new Date(date.getFullYear(), date.getMonth(), 1));
+      end = formatDateToYYYYMMDD(new Date(date.getFullYear(), date.getMonth() + 1, 0));
     } else if (period === 'Last Month') {
-      start = new Date(date.getFullYear(), date.getMonth() - 1, 1).toISOString().split('T')[0];
-      end = new Date(date.getFullYear(), date.getMonth(), 0).toISOString().split('T')[0];
+      start = formatDateToYYYYMMDD(new Date(date.getFullYear(), date.getMonth() - 1, 1));
+      end = formatDateToYYYYMMDD(new Date(date.getFullYear(), date.getMonth(), 0));
     } else if (period === 'This Week') {
-      const first = date.getDate() - date.getDay(); 
-      start = new Date(date.setDate(first)).toISOString().split('T')[0];
-      end = new Date(date.setDate(first + 6)).toISOString().split('T')[0];
+      const currentDay = date.getDay();
+      const first = date.getDate() - currentDay;
+      const dStart = new Date(date.getFullYear(), date.getMonth(), first);
+      const dEnd = new Date(date.getFullYear(), date.getMonth(), first + 6);
+      start = formatDateToYYYYMMDD(dStart);
+      end = formatDateToYYYYMMDD(dEnd);
     } else if (period === 'Custom') {
       start = customStartDate;
       end = customEndDate;
