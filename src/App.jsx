@@ -208,6 +208,28 @@ function MainApp() {
           )}
 
           <button 
+            className={view === 'staging' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setView('staging')}
+            style={{ position: 'relative' }}
+          >
+            <Layers size={18} />
+            Staging Queue
+            {projects.filter(p => p.status === 'Staged' || p.status === 'Pending Approval' || p.isStaged).length > 0 && (
+              <span style={{
+                background: '#8b5cf6',
+                color: '#ffffff',
+                borderRadius: '20px',
+                padding: '2px 8px',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                marginLeft: 'auto'
+              }}>
+                {projects.filter(p => p.status === 'Staged' || p.status === 'Pending Approval' || p.isStaged).length}
+              </span>
+            )}
+          </button>
+
+          <button 
             className={view === 'grid' ? 'btn-primary' : 'btn-secondary'}
             onClick={() => setView('grid')}
           >
@@ -245,28 +267,6 @@ function MainApp() {
           >
             <Table size={18} />
             Deployment Calendar
-          </button>
-
-          <button 
-            className={view === 'staging' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setView('staging')}
-            style={{ position: 'relative' }}
-          >
-            <Layers size={18} />
-            Staging Queue
-            {projects.filter(p => p.status === 'Staged' || p.status === 'Pending Approval' || p.isStaged).length > 0 && (
-              <span style={{
-                background: '#8b5cf6',
-                color: '#ffffff',
-                borderRadius: '20px',
-                padding: '2px 8px',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                marginLeft: 'auto'
-              }}>
-                {projects.filter(p => p.status === 'Staged' || p.status === 'Pending Approval' || p.isStaged).length}
-              </span>
-            )}
           </button>
 
           <button 
