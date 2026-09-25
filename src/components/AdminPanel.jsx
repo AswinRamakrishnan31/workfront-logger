@@ -44,7 +44,32 @@ export default function AdminPanel() {
     removeSkillFromResource
   } = useDropdowns();
 
-  const { userRoles, updateUserRole, groupDefinitions, saveGroupDefinition, deleteGroupDefinition } = useAuth();
+  const { 
+    userProfiles = {}, 
+    saveUserProfile, 
+    toggleDisableUser, 
+    userRoles, 
+    updateUserRole, 
+    groupDefinitions, 
+    saveGroupDefinition, 
+    deleteGroupDefinition 
+  } = useAuth();
+
+  // Profile Edit Drawer State
+  const [profileModalState, setProfileModalState] = useState({
+    isOpen: false,
+    name: '',
+    username: '',
+    password: '',
+    email: '',
+    firstName: '',
+    lastName: '',
+    dob: '',
+    secretQuestion: '',
+    secretAnswer: '',
+    role: 'Campaign Ops',
+    status: 'Active'
+  });
 
   const [activeTab, setActiveTab] = useState('databaseAdmin'); // 'databaseAdmin', 'userGroups', 'userAccess', etc.
   const [newInput, setNewInput] = useState('');
@@ -391,6 +416,41 @@ export default function AdminPanel() {
     );
   };
 
+  const handleOpenEditProfile = (name) => {
+    const prof = userProfiles[name] || {};
+    const role = userRoles[name] || (name === 'System Admin' ? 'Admin' : 'Campaign Ops');
+    setProfileModalState({
+      isOpen: true,
+      name,
+      username: prof.username || name.toLowerCase().replace(/\s+/g, ''),
+      password: prof.password || 'password123',
+      email: prof.email || `${name.toLowerCase().replace(/\s+/g, '')}@company.com`,
+      firstName: prof.firstName || name.split(' ')[0],
+      lastName: prof.lastName || name.split(' ')[1] || '',
+      dob: prof.dob || '1995-01-01',
+      secretQuestion: prof.secretQuestion || 'What is your favorite campaign tool?',
+      secretAnswer: prof.secretAnswer || 'Workfront',
+      role,
+      status: prof.status || 'Active'
+    });
+  };
+
+  const handleSaveProfileForm = (e) => {
+    e.preventDefault();
+    const { name, role, ...profileData } = profileModalState;
+    if (saveUserProfile) {
+      saveUserProfile({
+        name,
+        ...profileData
+      });
+    }
+    if (updateUserRole) {
+      updateUserRole(name, role);
+    }
+    setProfileModalState(prev => ({ ...prev, isOpen: false }));
+    alert(`Profile for "${name}" updated successfully!`);
+  };
+
   const renderUserAccessTable = () => {
     const allUsers = ['System Admin', ...ALL_RESOURCES];
     const filteredUsers = allUsers.filter(u => u.toLowerCase().includes(userSearchTerm.toLowerCase()));
@@ -400,8 +460,8 @@ export default function AdminPanel() {
       <div style={{ marginTop: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff' }}>Team Member Access Management</h3>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Assign access roles to team members</span>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff' }}>Team Member Directory & Security Profiles</h3>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Edit credentials, security questions, DOB, and toggle account enable/disable status</span>
           </div>
           <input
             type="text"
@@ -423,19 +483,35 @@ export default function AdminPanel() {
         <div className="admin-list">
           {filteredUsers.map(name => {
             const currentRole = userRoles[name] || (name === 'System Admin' ? 'Admin' : 'Campaign Ops');
+            const profile = userProfiles[name] || {};
+            const isDisabled = profile.status === 'Disabled';
+
             return (
-              <div key={name} className="admin-item" style={{ padding: '0.85rem 1.1rem' }}>
+              <div key={name} className="admin-item" style={{ padding: '0.85rem 1.1rem', opacity: isDisabled ? 0.6 : 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <UserCheck size={18} color="#818cf8" />
+                  <UserCheck size={18} color={isDisabled ? '#ef4444' : '#818cf8'} />
                   <div>
-                    <span style={{ fontWeight: '600', color: '#f8fafc', fontSize: '0.95rem' }}>{name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontWeight: '600', color: '#f8fafc', fontSize: '0.95rem' }}>{name}</span>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        fontWeight: 700,
+                        background: isDisabled ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                        color: isDisabled ? '#ef4444' : '#34d399',
+                        border: `1px solid ${isDisabled ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+                      }}>
+                        {isDisabled ? 'Disabled (Soft-Deleted)' : 'Active'}
+                      </span>
+                    </div>
                     <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                      {name.toLowerCase().replace(/\s+/g, '')}@company.com
+                      @{profile.username || name.toLowerCase().replace(/\s+/g, '')} • {profile.email || `${name.toLowerCase().replace(/\s+/g, '')}@company.com`}
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <select
                     value={currentRole}
                     onChange={(e) => updateUserRole(name, e.target.value)}
@@ -455,11 +531,187 @@ export default function AdminPanel() {
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
+
+                  <button
+                    className="btn-secondary"
+                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    onClick={() => handleOpenEditProfile(name)}
+                  >
+                    <Edit2 size={14} /> Edit Profile
+                  </button>
+
+                  <button
+                    style={{
+                      padding: '0.45rem 0.75rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: isDisabled ? '#10b981' : '#ef4444',
+                      background: isDisabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: isDisabled ? '#34d399' : '#f87171'
+                    }}
+                    onClick={() => toggleDisableUser && toggleDisableUser(name)}
+                  >
+                    {isDisabled ? 'Enable User' : 'Disable (Soft Delete)'}
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* EDIT PROFILE MODAL */}
+        {profileModalState.isOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content glass-card" style={{ maxWidth: '560px', width: '90%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h3 style={{ margin: 0, color: '#f8fafc' }}>✏️ Edit Profile: {profileModalState.name}</h3>
+                <button
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
+                  onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveProfileForm} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Username *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={profileModalState.username}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, username: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Password *</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      value={profileModalState.password}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, password: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>First Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={profileModalState.firstName}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, firstName: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Last Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={profileModalState.lastName}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, lastName: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Email Address *</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={profileModalState.email}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Date of Birth (DOB)</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={profileModalState.dob}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, dob: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Question (Password Recovery) *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profileModalState.secretQuestion}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, secretQuestion: e.target.value }))}
+                    placeholder="e.g. What city were you born in?"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Security Answer *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={profileModalState.secretAnswer}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, secretAnswer: e.target.value }))}
+                    placeholder="Answer to secret question..."
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>User Role Group</label>
+                    <select
+                      className="form-control"
+                      value={profileModalState.role}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, role: e.target.value }))}
+                    >
+                      {groupNamesList.map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Account Status</label>
+                    <select
+                      className="form-control"
+                      value={profileModalState.status}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, status: e.target.value }))}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Disabled">Disabled (Soft Deleted)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="action-btn secondary"
+                    onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="action-btn primary"
+                  >
+                    Save User Profile
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   };

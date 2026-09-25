@@ -32,7 +32,9 @@ export function autoAssignTeamMembers(
   teamMembers = TEAM_MEMBERS,
   targetProject = {},
   rules = {},
-  resourceSkills = {}
+  resourceSkills = {},
+  userProfiles = {},
+  leaves = []
 ) {
   const result = {};
   const assignmentDetails = {};
@@ -48,6 +50,11 @@ export function autoAssignTeamMembers(
   const targetTypeOfRequestRaw = (targetProject.typeOfRequest || '').trim();
   const targetCampaignType = targetCampaignTypeRaw.toLowerCase();
   const targetTypeOfRequest = targetTypeOfRequestRaw.toLowerCase();
+
+  const targetStartStr = targetProject.startDate || targetProject.requestDate || targetProject.creationDate || new Date().toISOString().split('T')[0];
+  const targetEndStr = targetProject.targetDate || targetProject.dueDate || targetStartStr;
+  const projStart = new Date(targetStartStr);
+  const projEnd = new Date(targetEndStr);
 
   // Role Routing Matrix Determination
   let requiredRoleKeys = null; // null means all roles if no specific rule matches
@@ -174,6 +181,30 @@ export function autoAssignTeamMembers(
 
     candidateList.forEach(cand => {
       const st = stats[cand];
+
+      // Check User Profile Disabled Status
+      const profile = userProfiles[cand];
+      if (profile && profile.status === 'Disabled') {
+        st.disqualifiedReason = `User account disabled`;
+        cappedCandidates.push(st);
+        return;
+      }
+
+      // Check Leave Schedule Overlaps
+      const activeLeave = (leaves || []).find(l => {
+        if (l.status === 'Cancelled') return false;
+        if (l.memberName.toLowerCase() !== cand.toLowerCase()) return false;
+        const lStart = new Date(l.startDate);
+        const lEnd = new Date(l.endDate || l.startDate);
+        return (lStart <= projEnd) && (lEnd >= projStart);
+      });
+
+      if (activeLeave) {
+        st.disqualifiedReason = `On Leave (${activeLeave.startDate} to ${activeLeave.endDate || activeLeave.startDate})`;
+        cappedCandidates.push(st);
+        return;
+      }
+
       // Check Rush Cap
       if (st.rushCount >= maxRush && maxRush > 0) {
         st.disqualifiedReason = `Handling ${st.rushCount} active Rush request(s) (Cap: ${maxRush})`;
@@ -219,10 +250,14 @@ export function autoAssignTeamMembers(
       reasons.push(`Rush: ${st.rushCount}/${maxRush}, Complex: ${st.complexCount}/${maxComplex}`);
       choiceReason = reasons.join(' | ');
     } else {
-      // Fallback: All candidates hit capacity caps! Pick candidate with lowest active workload
-      candidateList.sort((a, b) => stats[a].activeCount - stats[b].activeCount);
-      chosenCandidate = candidateList[0];
-      choiceReason = `Capacity Fallback (All candidates capped out). Assigned to ${chosenCandidate} (Active Workload: ${stats[chosenCandidate].activeCount})`;
+      // Fallback: All candidates hit capacity caps! Pick non-disabled candidate with lowest active workload
+      const availableFallbacks = candidateList.filter(cand => {
+        const p = userProfiles[cand];
+        return !p || p.status !== 'Disabled';
+      });
+      availableFallbacks.sort((a, b) => stats[a].activeCount - stats[b].activeCount);
+      chosenCandidate = availableFallbacks[0] || candidateList[0];
+      choiceReason = `Capacity Fallback (All candidates capped/on leave). Assigned to ${chosenCandidate} (Active Workload: ${stats[chosenCandidate].activeCount})`;
     }
 
     result[key] = chosenCandidate;

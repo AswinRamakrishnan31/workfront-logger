@@ -9,12 +9,24 @@ import { useDropdowns, ROLE_LABELS } from '../context/DropdownContext';
 import { TEAM_MEMBERS, ALL_RESOURCES } from '../constants';
 import './MyDashboard.css';
 
-export default function MyDashboard({ projects = [], onUpdateProject }) {
+export default function MyDashboard({ projects = [], onUpdateProject, leaves = [] }) {
   const { currentUser, login, userRoles } = useAuth();
   const { options } = useDropdowns();
 
   const teamMembersMap = options?.teamMembers || TEAM_MEMBERS;
   const currentUserName = currentUser?.name || 'System Admin';
+
+  // Compute upcoming planned leaves for currentUser
+  const userUpcomingLeaves = useMemo(() => {
+    if (!currentUserName) return [];
+    const todayStr = new Date().toISOString().split('T')[0];
+    return (leaves || []).filter(l => {
+      if (l.status === 'Cancelled') return false;
+      if (l.memberName.toLowerCase() !== currentUserName.toLowerCase()) return false;
+      const lEnd = l.endDate || l.startDate;
+      return lEnd >= todayStr;
+    });
+  }, [leaves, currentUserName]);
 
   // Determine user sub-team / role key
   const userSubRoleKey = useMemo(() => {
@@ -362,6 +374,30 @@ export default function MyDashboard({ projects = [], onUpdateProject }) {
           </div>
         </div>
       </div>
+
+      {/* PLANNED LEAVE INTIMATION BANNER */}
+      {userUpcomingLeaves.length > 0 && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
+          border: '1px solid rgba(139, 92, 246, 0.4)',
+          borderRadius: '12px',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          color: '#e2e8f0',
+          boxShadow: '0 4px 16px rgba(139, 92, 246, 0.15)'
+        }}>
+          <span style={{ fontSize: '1.4rem' }}>🌴</span>
+          <div>
+            <strong style={{ color: '#c084fc', fontSize: '0.95rem' }}>Upcoming Planned Leave Intimation:</strong>
+            <span style={{ fontSize: '0.88rem', marginLeft: '0.5rem', color: '#cbd5e1' }}>
+              You have {userUpcomingLeaves.length} scheduled leave(s) coming up: {userUpcomingLeaves.map(l => `${l.leaveType} (${l.startDate}${l.endDate && l.endDate !== l.startDate ? ' to ' + l.endDate : ''})`).join(', ')}. Auto-assignment will automatically skip assigning new tasks to you during these dates.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 2. STAT KPI SUMMARY CARDS */}
       <div className="stats-grid-4">

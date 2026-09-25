@@ -11,6 +11,8 @@ import ResourceLoading from './components/ResourceLoading';
 import StagingQueue from './components/StagingQueue';
 import AdminPanel from './components/AdminPanel';
 import LoginModal from './components/LoginModal';
+import LoginScreen from './components/LoginScreen';
+import LeaveManagement, { DEFAULT_LEAVE_RECORDS, DEFAULT_PUBLIC_HOLIDAYS, DEFAULT_OPTIONAL_HOLIDAYS } from './components/LeaveManagement';
 import { DropdownProvider } from './context/DropdownContext';
 import { AuthProvider, useAuth, ROLES } from './context/AuthContext';
 import projectApi from './api/projectApi';
@@ -23,7 +25,37 @@ function MainApp() {
   const [loading, setLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
+  // Leave & Holiday State Management
+  const [leaves, setLeaves] = useState(() => {
+    const saved = localStorage.getItem('wf_team_leaves');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return DEFAULT_LEAVE_RECORDS;
+  });
+
+  const [holidays, setHolidays] = useState(() => {
+    const saved = localStorage.getItem('wf_team_holidays');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [...DEFAULT_PUBLIC_HOLIDAYS, ...DEFAULT_OPTIONAL_HOLIDAYS];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('wf_team_leaves', JSON.stringify(leaves));
+  }, [leaves]);
+
+  useEffect(() => {
+    localStorage.setItem('wf_team_holidays', JSON.stringify(holidays));
+  }, [holidays]);
+
   const { currentUser, permissions } = useAuth();
+
+  // MANDATORY LOGIN SCREEN IF NO CURRENT USER SESSION
+  if (!currentUser) {
+    return <LoginScreen />;
+  }
 
   // Load from REST API on mount with fallback to local storage
   const fetchProjects = async () => {
@@ -286,6 +318,15 @@ function MainApp() {
             Resource Loading
           </button>
 
+          <button 
+            className={view === 'leaveManagement' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setView('leaveManagement')}
+            style={{ position: 'relative' }}
+          >
+            <Table size={18} />
+            Leave Management
+          </button>
+
           {permissions.canAccessAdminPanel && (
             <button 
               className={view === 'admin' ? 'btn-primary' : 'btn-secondary'}
@@ -300,15 +341,16 @@ function MainApp() {
       </aside>
 
       <main className="main-content">
-        {view === 'myDashboard' && <MyDashboard projects={projects} onUpdateProject={handleUpdateProject} />}
-        {view === 'form' && permissions.canLogProjects && <ProjectForm onAddProject={handleAddProject} projects={projects} />}
+        {view === 'myDashboard' && <MyDashboard projects={projects} onUpdateProject={handleUpdateProject} leaves={leaves} />}
+        {view === 'form' && permissions.canLogProjects && <ProjectForm onAddProject={handleAddProject} projects={projects} leaves={leaves} />}
         {view === 'grid' && <ProjectGrid projects={projects} onUpdateProject={handleUpdateProject} onBulkAddProjects={handleBulkAddProjects} onClearProjects={handleClearProjects} onDeleteProjects={handleDeleteProjects} />}
-        {view === 'staging' && <StagingQueue projects={projects} onUpdateProject={handleUpdateProject} onDeleteProjects={handleDeleteProjects} onBulkAddProjects={handleBulkAddProjects} />}
+        {view === 'staging' && <StagingQueue projects={projects} onUpdateProject={handleUpdateProject} onDeleteProjects={handleDeleteProjects} onBulkAddProjects={handleBulkAddProjects} leaves={leaves} />}
         {view === 'sla' && <SLAMasterModule readOnly={!permissions.canUpdateSLA} />}
         {view === 'scrum' && <ScrumDashboard projects={projects} />}
         {view === 'campaignOps' && <CampaignOpsDashboard projects={projects} />}
         {view === 'deploymentCalendar' && <DeploymentCalendar projects={projects} />}
         {view === 'resourceLoading' && <ResourceLoading projects={projects} />}
+        {view === 'leaveManagement' && <LeaveManagement leaves={leaves} setLeaves={setLeaves} holidays={holidays} setHolidays={setHolidays} projects={projects} setProjects={setProjects} />}
         {view === 'admin' && permissions.canAccessAdminPanel && <AdminPanel />}
       </main>
 
