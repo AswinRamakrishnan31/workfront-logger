@@ -623,190 +623,6 @@ export default function AdminPanel() {
             );
           })}
         </div>
-
-        {/* CREATE / EDIT USER PROFILE MODAL */}
-        {profileModalState.isOpen && (
-          <div className="modal-overlay">
-            <div className="modal-content glass-card" style={{ maxWidth: '580px', width: '92%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #334155', pb: '0.75rem' }}>
-                <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {profileModalState.isNew ? '➕ Add New Team Member Profile' : `✏️ Edit Profile: ${profileModalState.name}`}
-                </h3>
-                <button
-                  style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
-                  onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleSaveProfileForm} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.85rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Member Full Name / Display Name *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="e.g. Subhasri Ramasamy"
-                      value={profileModalState.name}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, name: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Sub-Team Pool Role *</label>
-                    <select
-                      className="form-control"
-                      value={profileModalState.subRoleKey}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, subRoleKey: e.target.value }))}
-                    >
-                      {Object.keys(ROLE_LABELS).map(roleKey => (
-                        <option key={roleKey} value={roleKey}>{ROLE_LABELS[roleKey]}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Username *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="e.g. subhasri"
-                      value={profileModalState.username}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, username: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Password *</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Password"
-                      value={profileModalState.password}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>First Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="First Name"
-                      value={profileModalState.firstName}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, firstName: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Last Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Last Name"
-                      value={profileModalState.lastName}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, lastName: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Email Address *</label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      placeholder="name@company.com"
-                      value={profileModalState.email}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Date of Birth (DOB)</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={profileModalState.dob}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, dob: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Security Question (Password Recovery) *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={profileModalState.secretQuestion}
-                    onChange={e => setProfileModalState(prev => ({ ...prev, secretQuestion: e.target.value }))}
-                    placeholder="e.g. What is your favorite campaign tool?"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Security Answer *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={profileModalState.secretAnswer}
-                    onChange={e => setProfileModalState(prev => ({ ...prev, secretAnswer: e.target.value }))}
-                    placeholder="Answer to secret question..."
-                    required
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>User System Access Group</label>
-                    <select
-                      className="form-control"
-                      value={profileModalState.role}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, role: e.target.value }))}
-                    >
-                      {groupNamesList.map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Account Status</label>
-                    <select
-                      className="form-control"
-                      value={profileModalState.status}
-                      onChange={e => setProfileModalState(prev => ({ ...prev, status: e.target.value }))}
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Disabled">Disabled (Soft Deleted)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  <button
-                    type="button"
-                    className="action-btn secondary"
-                    onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="action-btn primary"
-                  >
-                    {profileModalState.isNew ? 'Save New Member Profile' : 'Update User Profile'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -1583,6 +1399,190 @@ export default function AdminPanel() {
           {renderItemList()}
         </div>
       </div>
+
+      {/* CREATE / EDIT USER PROFILE MODAL */}
+      {profileModalState.isOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-card" style={{ maxWidth: '580px', width: '92%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #334155', pb: '0.75rem' }}>
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {profileModalState.isNew ? '➕ Add New Team Member Profile' : `✏️ Edit Profile: ${profileModalState.name}`}
+              </h3>
+              <button
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
+                onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfileForm} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.85rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Member Full Name / Display Name *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. Subhasri Ramasamy"
+                    value={profileModalState.name}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Sub-Team Pool Role *</label>
+                  <select
+                    className="form-control"
+                    value={profileModalState.subRoleKey}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, subRoleKey: e.target.value }))}
+                  >
+                    {Object.keys(ROLE_LABELS).map(roleKey => (
+                      <option key={roleKey} value={roleKey}>{ROLE_LABELS[roleKey]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Username *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. subhasri"
+                    value={profileModalState.username}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, username: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Password *</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="Password"
+                    value={profileModalState.password}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, password: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>First Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="First Name"
+                    value={profileModalState.firstName}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, firstName: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Last Name</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Last Name"
+                    value={profileModalState.lastName}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, lastName: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Email Address *</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    placeholder="name@company.com"
+                    value={profileModalState.email}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Date of Birth (DOB)</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={profileModalState.dob}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, dob: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Security Question (Password Recovery) *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={profileModalState.secretQuestion}
+                  onChange={e => setProfileModalState(prev => ({ ...prev, secretQuestion: e.target.value }))}
+                  placeholder="e.g. What is your favorite campaign tool?"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Security Answer *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={profileModalState.secretAnswer}
+                  onChange={e => setProfileModalState(prev => ({ ...prev, secretAnswer: e.target.value }))}
+                  placeholder="Answer to secret question..."
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>User System Access Group</label>
+                  <select
+                    className="form-control"
+                    value={profileModalState.role}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, role: e.target.value }))}
+                  >
+                    {groupNamesList.map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Account Status</label>
+                  <select
+                    className="form-control"
+                    value={profileModalState.status}
+                    onChange={e => setProfileModalState(prev => ({ ...prev, status: e.target.value }))}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Disabled">Disabled (Soft Deleted)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="action-btn secondary"
+                  onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="action-btn primary"
+                >
+                  {profileModalState.isNew ? 'Save New Member Profile' : 'Update User Profile'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
