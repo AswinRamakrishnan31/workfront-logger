@@ -50,10 +50,12 @@ export default function AdminPanel() {
     toggleDisableUser, 
     userRoles, 
     updateUserRole, 
-    groupDefinitions, 
+    groupDefinitions = {}, 
     saveGroupDefinition, 
     deleteGroupDefinition 
   } = useAuth();
+
+  const groupNamesList = Object.keys(groupDefinitions);
 
   // Profile Edit Drawer State
   const [profileModalState, setProfileModalState] = useState({
@@ -469,13 +471,26 @@ export default function AdminPanel() {
     if (isNew) {
       // Add member to team directory pool
       addTeamMember(subRoleKey || activeRoleKey || 'emailDeveloper', fullName);
+    } else {
+      // Check if sub-role changed
+      const currentRoleKey = Object.keys(options.teamMembers || {}).find(rKey => 
+        (options.teamMembers[rKey] || []).includes(fullName)
+      );
+      if (currentRoleKey && subRoleKey && currentRoleKey !== subRoleKey) {
+        const idx = (options.teamMembers[currentRoleKey] || []).indexOf(fullName);
+        if (idx !== -1) {
+          deleteTeamMember(currentRoleKey, idx);
+          addTeamMember(subRoleKey, fullName);
+        }
+      }
     }
 
     if (saveUserProfile) {
       saveUserProfile({
         name: fullName,
-        firstName,
-        lastName,
+        firstName: firstName || fullName.split(' ')[0],
+        lastName: lastName || fullName.split(' ').slice(1).join(' '),
+        role,
         ...profileData
       });
     }
@@ -485,7 +500,7 @@ export default function AdminPanel() {
     }
 
     setProfileModalState(prev => ({ ...prev, isOpen: false }));
-    alert(`Team Member "${fullName}" ${isNew ? 'added' : 'updated'} successfully with full security profile!`);
+    alert(`Team Member "${fullName}" ${isNew ? 'added' : 'updated'} successfully with User Group "${role}"!`);
   };
 
   const renderUserAccessTable = () => {
@@ -626,33 +641,31 @@ export default function AdminPanel() {
               </div>
 
               <form onSubmit={handleSaveProfileForm} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                {profileModalState.isNew && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.85rem' }}>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Member Full Name / Display Name *</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="e.g. Subhasri Ramasamy"
-                        value={profileModalState.name}
-                        onChange={e => setProfileModalState(prev => ({ ...prev, name: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Sub-Team Pool Role *</label>
-                      <select
-                        className="form-control"
-                        value={profileModalState.subRoleKey}
-                        onChange={e => setProfileModalState(prev => ({ ...prev, subRoleKey: e.target.value }))}
-                      >
-                        {Object.keys(ROLE_LABELS).map(roleKey => (
-                          <option key={roleKey} value={roleKey}>{ROLE_LABELS[roleKey]}</option>
-                        ))}
-                      </select>
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.85rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Member Full Name / Display Name *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Subhasri Ramasamy"
+                      value={profileModalState.name}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, name: e.target.value }))}
+                      required
+                    />
                   </div>
-                )}
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Sub-Team Pool Role *</label>
+                    <select
+                      className="form-control"
+                      value={profileModalState.subRoleKey}
+                      onChange={e => setProfileModalState(prev => ({ ...prev, subRoleKey: e.target.value }))}
+                    >
+                      {Object.keys(ROLE_LABELS).map(roleKey => (
+                        <option key={roleKey} value={roleKey}>{ROLE_LABELS[roleKey]}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                   <div className="form-group">
@@ -1242,9 +1255,34 @@ export default function AdminPanel() {
                         }}>
                           {isDisabled ? 'Disabled (Soft-Deleted)' : 'Active'}
                         </span>
-                        <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.4)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
-                          Role: {currentRole}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(99, 102, 241, 0.15)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#818cf8', fontWeight: 700 }}>Group:</span>
+                          <select
+                            value={currentRole}
+                            onChange={(e) => {
+                              const newRole = e.target.value;
+                              updateUserRole(name, newRole);
+                              if (saveUserProfile) {
+                                saveUserProfile({ name, role: newRole });
+                              }
+                            }}
+                            style={{
+                              padding: '2px 6px',
+                              background: '#0f172a',
+                              border: '1px solid #475569',
+                              borderRadius: '4px',
+                              color: currentRole === 'Admin' ? '#818cf8' : (currentRole === 'SPOC' ? '#38bdf8' : '#34d399'),
+                              fontWeight: '700',
+                              fontSize: '0.78rem',
+                              outline: 'none',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {groupNamesList.map(r => (
+                              <option key={r} value={r}>{r}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
                       <div style={{ fontSize: '0.82rem', color: '#cbd5e1', marginTop: '0.35rem', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
