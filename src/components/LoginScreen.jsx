@@ -10,6 +10,8 @@ export default function LoginScreen() {
   const [mode, setMode] = useState('signIn'); // 'signIn' | 'forgotPassword'
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -18,6 +20,29 @@ export default function LoginScreen() {
   const [matchedProfile, setMatchedProfile] = useState(null);
   const [secretAnswerInput, setSecretAnswerInput] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
+
+  // Load remembered credentials on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('wf_remembered_credentials');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.rememberMe && parsed.identifier) {
+          setIdentifier(parsed.identifier);
+          setPassword(parsed.password || '');
+          setRememberMe(true);
+          setHasSavedCredentials(true);
+        }
+      } catch (e) {}
+    }
+  }, []);
+
+  const handleClearSavedCredentials = () => {
+    localStorage.removeItem('wf_remembered_credentials');
+    setIdentifier('');
+    setPassword('');
+    setHasSavedCredentials(false);
+  };
 
   const handleSignIn = (e) => {
     e.preventDefault();
@@ -32,6 +57,16 @@ export default function LoginScreen() {
     const res = authenticateUser(identifier, password);
     if (!res.success) {
       setErrorMessage(res.error);
+    } else {
+      if (rememberMe) {
+        localStorage.setItem('wf_remembered_credentials', JSON.stringify({
+          identifier: identifier.trim(),
+          password: password,
+          rememberMe: true
+        }));
+      } else {
+        localStorage.removeItem('wf_remembered_credentials');
+      }
     }
   };
 
@@ -171,6 +206,27 @@ export default function LoginScreen() {
                   className="login-input-field"
                 />
               </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0.85rem 0 1.25rem 0' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', cursor: 'pointer', fontSize: '0.84rem', color: '#cbd5e1', userSelect: 'none' }}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#6366f1', cursor: 'pointer' }}
+                />
+                <span>Remember username & password</span>
+              </label>
+              {hasSavedCredentials && (
+                <button
+                  type="button"
+                  onClick={handleClearSavedCredentials}
+                  style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Clear saved
+                </button>
+              )}
             </div>
 
             <button type="submit" className="login-btn-primary">

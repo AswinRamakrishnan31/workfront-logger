@@ -360,13 +360,81 @@ function MainApp() {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: '#090d16',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+          color: '#ffffff',
+          fontFamily: 'Inter, sans-serif'
+        }}>
+          <div style={{
+            background: '#0f172a',
+            border: '1px solid #334155',
+            borderRadius: '16px',
+            padding: '2.5rem',
+            maxWidth: '520px',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#818cf8', fontSize: '1.5rem' }}>Workfront Logger Recovery</h2>
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              An unexpected render update occurred. Click below to restore session and reload dashboard.
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+              style={{
+                padding: '0.75rem 1.75rem',
+                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '0.95rem',
+                cursor: 'pointer'
+              }}
+            >
+              Reload Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <DropdownProvider>
-      <AuthProvider>
-        <MainApp />
-      </AuthProvider>
-    </DropdownProvider>
+    <ErrorBoundary>
+      <DropdownProvider>
+        <AuthProvider>
+          <MainApp />
+        </AuthProvider>
+      </DropdownProvider>
+    </ErrorBoundary>
   );
 }
 

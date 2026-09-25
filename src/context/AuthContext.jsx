@@ -388,8 +388,20 @@ export const AuthProvider = ({ children }) => {
 
   // Dynamic permission resolver based on current user group
   const activeRoleName = currentUser?.role || 'Viewer';
-  const activeGroup = groupDefinitions[activeRoleName] || DEFAULT_GROUP_DEFINITIONS['Viewer'];
-  const permissions = activeGroup.permissions;
+  const activeGroup = groupDefinitions?.[activeRoleName] || DEFAULT_GROUP_DEFINITIONS[activeRoleName] || DEFAULT_GROUP_DEFINITIONS['Viewer'];
+  const permissions = activeGroup?.permissions || DEFAULT_GROUP_DEFINITIONS['Viewer']?.permissions || {
+    canLogProjects: true,
+    canViewProjects: true,
+    canEditProjects: true,
+    canDeleteProjects: true,
+    canUpdateSLA: true,
+    canViewSLA: true,
+    canAccessScrum: true,
+    canAccessCampaignOps: true,
+    canAccessCalendar: true,
+    canAccessResourceLoading: true,
+    canAccessAdminPanel: true
+  };
 
   return (
     <AuthContext.Provider value={{
