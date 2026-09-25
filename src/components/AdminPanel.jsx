@@ -96,15 +96,15 @@ export default function AdminPanel() {
   const CATEGORIES = [
     { key: 'databaseAdmin', label: 'DB Backup, Memory & Archival', icon: Database },
     { key: 'userGroups', label: 'User Groups & Module Access', icon: KeyRound },
-    { key: 'userAccess', label: 'User Role Assignments', icon: ShieldCheck },
+    { key: 'userAccess', label: 'User Credentials & Access Roles', icon: ShieldCheck },
+    { key: 'teamMembers', label: 'Team Members Directory & Security Profiles', icon: Users },
     { key: 'autoAssignRules', label: 'Auto-Assignment Rules & Resource Skills', icon: Sliders },
     { key: 'lob', label: 'Line of Business', icon: Building, optionKey: 'lobOptions' },
     { key: 'campaignType', label: 'Type of Campaign', icon: Tag, optionKey: 'campaignTypeOptions' },
     { key: 'priority', label: 'Priority', icon: AlertCircle, optionKey: 'priorityOptions' },
     { key: 'typeOfRequest', label: 'Type of Request', icon: Layers, optionKey: 'typeOfRequestOptions' },
     { key: 'taskComplexity', label: 'Task Complexity', icon: ListChecks, optionKey: 'taskComplexityOptions' },
-    { key: 'status', label: 'Status', icon: CheckCircle2, optionKey: 'statusOptions' },
-    { key: 'teamMembers', label: 'Team Members Directory', icon: Users }
+    { key: 'status', label: 'Status', icon: CheckCircle2, optionKey: 'statusOptions' }
   ];
 
   const currentCategory = CATEGORIES.find(c => c.key === activeTab);
@@ -416,11 +416,31 @@ export default function AdminPanel() {
     );
   };
 
-  const handleOpenEditProfile = (name) => {
+  const handleOpenCreateProfile = (defaultSubRoleKey = 'emailDeveloper') => {
+    setProfileModalState({
+      isOpen: true,
+      isNew: true,
+      name: '',
+      username: '',
+      password: 'password123',
+      email: '',
+      firstName: '',
+      lastName: '',
+      dob: '1995-01-01',
+      secretQuestion: 'What is your favorite campaign tool?',
+      secretAnswer: '',
+      subRoleKey: defaultSubRoleKey,
+      role: 'Campaign Ops',
+      status: 'Active'
+    });
+  };
+
+  const handleOpenEditProfile = (name, subRoleKey = null) => {
     const prof = userProfiles[name] || {};
     const role = userRoles[name] || (name === 'System Admin' ? 'Admin' : 'Campaign Ops');
     setProfileModalState({
       isOpen: true,
+      isNew: false,
       name,
       username: prof.username || name.toLowerCase().replace(/\s+/g, ''),
       password: prof.password || 'password123',
@@ -430,6 +450,7 @@ export default function AdminPanel() {
       dob: prof.dob || '1995-01-01',
       secretQuestion: prof.secretQuestion || 'What is your favorite campaign tool?',
       secretAnswer: prof.secretAnswer || 'Workfront',
+      subRoleKey: subRoleKey || activeRoleKey || 'emailDeveloper',
       role,
       status: prof.status || 'Active'
     });
@@ -437,18 +458,34 @@ export default function AdminPanel() {
 
   const handleSaveProfileForm = (e) => {
     e.preventDefault();
-    const { name, role, ...profileData } = profileModalState;
+    const { name, role, subRoleKey, isNew, firstName, lastName, ...profileData } = profileModalState;
+    const fullName = (name || `${firstName || ''} ${lastName || ''}`).trim();
+
+    if (!fullName) {
+      alert('Please enter a team member name.');
+      return;
+    }
+
+    if (isNew) {
+      // Add member to team directory pool
+      addTeamMember(subRoleKey || activeRoleKey || 'emailDeveloper', fullName);
+    }
+
     if (saveUserProfile) {
       saveUserProfile({
-        name,
+        name: fullName,
+        firstName,
+        lastName,
         ...profileData
       });
     }
+
     if (updateUserRole) {
-      updateUserRole(name, role);
+      updateUserRole(fullName, role);
     }
+
     setProfileModalState(prev => ({ ...prev, isOpen: false }));
-    alert(`Profile for "${name}" updated successfully!`);
+    alert(`Team Member "${fullName}" ${isNew ? 'added' : 'updated'} successfully with full security profile!`);
   };
 
   const renderUserAccessTable = () => {
@@ -458,26 +495,36 @@ export default function AdminPanel() {
 
     return (
       <div style={{ marginTop: '1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff' }}>Team Member Directory & Security Profiles</h3>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Edit credentials, security questions, DOB, and toggle account enable/disable status</span>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Edit credentials, usernames, passwords, secret questions, DOB, and toggle account enable/disable status</span>
           </div>
-          <input
-            type="text"
-            placeholder="Search team member..."
-            value={userSearchTerm}
-            onChange={(e) => setUserSearchTerm(e.target.value)}
-            style={{
-              padding: '0.5rem 0.85rem',
-              background: '#0f172a',
-              border: '1px solid #334155',
-              borderRadius: '8px',
-              color: '#ffffff',
-              fontSize: '0.85rem',
-              width: '240px'
-            }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              type="button"
+              className="action-btn primary"
+              style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => handleOpenCreateProfile('emailDeveloper')}
+            >
+              <Plus size={16} /> Add New Team Member
+            </button>
+            <input
+              type="text"
+              placeholder="Search team member..."
+              value={userSearchTerm}
+              onChange={(e) => setUserSearchTerm(e.target.value)}
+              style={{
+                padding: '0.5rem 0.85rem',
+                background: '#0f172a',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                width: '220px'
+              }}
+            />
+          </div>
         </div>
 
         <div className="admin-list">
@@ -506,7 +553,7 @@ export default function AdminPanel() {
                       </span>
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-                      @{profile.username || name.toLowerCase().replace(/\s+/g, '')} • {profile.email || `${name.toLowerCase().replace(/\s+/g, '')}@company.com`}
+                      @{profile.username || name.toLowerCase().replace(/\s+/g, '')} • {profile.email || `${name.toLowerCase().replace(/\s+/g, '')}@company.com`} {profile.dob ? `• 📅 DOB: ${profile.dob}` : ''}
                     </div>
                   </div>
                 </div>
@@ -562,12 +609,14 @@ export default function AdminPanel() {
           })}
         </div>
 
-        {/* EDIT PROFILE MODAL */}
+        {/* CREATE / EDIT USER PROFILE MODAL */}
         {profileModalState.isOpen && (
           <div className="modal-overlay">
-            <div className="modal-content glass-card" style={{ maxWidth: '560px', width: '90%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <h3 style={{ margin: 0, color: '#f8fafc' }}>✏️ Edit Profile: {profileModalState.name}</h3>
+            <div className="modal-content glass-card" style={{ maxWidth: '580px', width: '92%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #334155', pb: '0.75rem' }}>
+                <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {profileModalState.isNew ? '➕ Add New Team Member Profile' : `✏️ Edit Profile: ${profileModalState.name}`}
+                </h3>
                 <button
                   style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
                   onClick={() => setProfileModalState(prev => ({ ...prev, isOpen: false }))}
@@ -576,13 +625,42 @@ export default function AdminPanel() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProfileForm} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <form onSubmit={handleSaveProfileForm} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                {profileModalState.isNew && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.85rem' }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Member Full Name / Display Name *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="e.g. Subhasri Ramasamy"
+                        value={profileModalState.name}
+                        onChange={e => setProfileModalState(prev => ({ ...prev, name: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Sub-Team Pool Role *</label>
+                      <select
+                        className="form-control"
+                        value={profileModalState.subRoleKey}
+                        onChange={e => setProfileModalState(prev => ({ ...prev, subRoleKey: e.target.value }))}
+                      >
+                        {Object.keys(ROLE_LABELS).map(roleKey => (
+                          <option key={roleKey} value={roleKey}>{ROLE_LABELS[roleKey]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                   <div className="form-group">
                     <label className="form-label" style={{ fontSize: '0.8rem' }}>Username *</label>
                     <input
                       type="text"
                       className="form-control"
+                      placeholder="e.g. subhasri"
                       value={profileModalState.username}
                       onChange={e => setProfileModalState(prev => ({ ...prev, username: e.target.value }))}
                       required
@@ -593,6 +671,7 @@ export default function AdminPanel() {
                     <input
                       type="password"
                       className="form-control"
+                      placeholder="Password"
                       value={profileModalState.password}
                       onChange={e => setProfileModalState(prev => ({ ...prev, password: e.target.value }))}
                       required
@@ -606,6 +685,7 @@ export default function AdminPanel() {
                     <input
                       type="text"
                       className="form-control"
+                      placeholder="First Name"
                       value={profileModalState.firstName}
                       onChange={e => setProfileModalState(prev => ({ ...prev, firstName: e.target.value }))}
                     />
@@ -615,6 +695,7 @@ export default function AdminPanel() {
                     <input
                       type="text"
                       className="form-control"
+                      placeholder="Last Name"
                       value={profileModalState.lastName}
                       onChange={e => setProfileModalState(prev => ({ ...prev, lastName: e.target.value }))}
                     />
@@ -627,6 +708,7 @@ export default function AdminPanel() {
                     <input
                       type="email"
                       className="form-control"
+                      placeholder="name@company.com"
                       value={profileModalState.email}
                       onChange={e => setProfileModalState(prev => ({ ...prev, email: e.target.value }))}
                       required
@@ -644,13 +726,13 @@ export default function AdminPanel() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Question (Password Recovery) *</label>
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>Secret Security Question (Password Recovery) *</label>
                   <input
                     type="text"
                     className="form-control"
                     value={profileModalState.secretQuestion}
                     onChange={e => setProfileModalState(prev => ({ ...prev, secretQuestion: e.target.value }))}
-                    placeholder="e.g. What city were you born in?"
+                    placeholder="e.g. What is your favorite campaign tool?"
                     required
                   />
                 </div>
@@ -669,7 +751,7 @@ export default function AdminPanel() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                   <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.8rem' }}>User Role Group</label>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>User System Access Group</label>
                     <select
                       className="form-control"
                       value={profileModalState.role}
@@ -705,7 +787,7 @@ export default function AdminPanel() {
                     type="submit"
                     className="action-btn primary"
                   >
-                    Save User Profile
+                    {profileModalState.isNew ? 'Save New Member Profile' : 'Update User Profile'}
                   </button>
                 </div>
               </form>
@@ -1069,6 +1151,158 @@ export default function AdminPanel() {
     );
   };
 
+  const renderTeamMembersSection = () => {
+    const teamMembersMap = options.teamMembers || {};
+    const currentMembers = teamMembersMap[activeRoleKey] || [];
+    const filteredMembers = currentMembers.filter(m => m.toLowerCase().includes(userSearchTerm.toLowerCase()));
+
+    return (
+      <div style={{ marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#ffffff' }}>Team Members Directory & Security Profiles</h3>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Manage team credentials, username, password, email, date of birth, and secret security questions & answers</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => handleOpenCreateProfile(activeRoleKey)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.1rem' }}
+            >
+              <Plus size={18} /> ➕ Add New Member with Credentials
+            </button>
+            <input
+              type="text"
+              placeholder="Search member in pool..."
+              value={userSearchTerm}
+              onChange={(e) => setUserSearchTerm(e.target.value)}
+              style={{
+                padding: '0.55rem 0.85rem',
+                background: '#0f172a',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                width: '210px'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* SUB-ROLES PICKER */}
+        <div className="admin-subroles-bar" style={{ marginBottom: '1.25rem' }}>
+          {Object.keys(ROLE_LABELS).map(roleKey => (
+            <button
+              key={roleKey}
+              className={`admin-subrole-btn ${activeRoleKey === roleKey ? 'active' : ''}`}
+              onClick={() => {
+                setActiveRoleKey(roleKey);
+                setEditingIndex(null);
+                setNewInput('');
+              }}
+            >
+              {ROLE_LABELS[roleKey]} ({teamMembersMap[roleKey]?.length || 0})
+            </button>
+          ))}
+        </div>
+
+        {/* TEAM MEMBER PROFILE CARDS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          {filteredMembers.length === 0 ? (
+            <div className="admin-empty-state" style={{ background: '#0f172a', padding: '2rem', borderRadius: '10px', textAlign: 'center', border: '1px solid #334155' }}>
+              No team members registered under {ROLE_LABELS[activeRoleKey]} yet. Click "➕ Add New Member with Credentials" above!
+            </div>
+          ) : (
+            filteredMembers.map((name, index) => {
+              const profile = userProfiles[name] || {};
+              const isDisabled = profile.status === 'Disabled';
+              const currentRole = userRoles[name] || (name === 'System Admin' ? 'Admin' : 'Campaign Ops');
+
+              return (
+                <div key={name} className="admin-item" style={{ padding: '1rem 1.25rem', background: '#0f172a', border: '1px solid #334155', borderRadius: '10px', opacity: isDisabled ? 0.65 : 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <UserCheck size={22} color={isDisabled ? '#ef4444' : '#818cf8'} />
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span style={{ fontWeight: '700', color: '#f8fafc', fontSize: '1rem' }}>
+                          {profile.firstName || profile.lastName ? `${profile.firstName || ''} ${profile.lastName || ''}`.trim() : name}
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: '#94a3b8', background: '#1e293b', padding: '2px 8px', borderRadius: '6px' }}>
+                          ({name})
+                        </span>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          background: isDisabled ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                          color: isDisabled ? '#ef4444' : '#34d399',
+                          border: `1px solid ${isDisabled ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`
+                        }}>
+                          {isDisabled ? 'Disabled (Soft-Deleted)' : 'Active'}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.4)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                          Role: {currentRole}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '0.82rem', color: '#cbd5e1', marginTop: '0.35rem', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                        <span>👤 <strong>User Name:</strong> <code style={{ color: '#38bdf8' }}>@{profile.username || name.toLowerCase().replace(/\s+/g, '')}</code></span>
+                        <span>🔑 <strong>Password:</strong> <code style={{ color: '#a855f7' }}>{profile.password ? profile.password : 'password123'}</code></span>
+                        <span>✉️ <strong>Email:</strong> {profile.email || `${name.toLowerCase().replace(/\s+/g, '')}@company.com`}</span>
+                        {profile.dob && <span>📅 <strong>DOB:</strong> {profile.dob}</span>}
+                      </div>
+
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                        ❓ <strong>Secret Question:</strong> "{profile.secretQuestion || 'What is your favorite campaign tool?'}" • <strong>Answer:</strong> "{profile.secretAnswer || 'Workfront'}"
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <button
+                      className="btn-primary"
+                      style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                      onClick={() => handleOpenEditProfile(name, activeRoleKey)}
+                    >
+                      <Edit2 size={14} /> Edit Credentials & Profile
+                    </button>
+
+                    <button
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        fontSize: '0.8rem',
+                        borderRadius: '6px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: isDisabled ? '#10b981' : '#ef4444',
+                        background: isDisabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        color: isDisabled ? '#34d399' : '#f87171'
+                      }}
+                      onClick={() => toggleDisableUser && toggleDisableUser(name)}
+                    >
+                      {isDisabled ? 'Enable' : 'Disable'}
+                    </button>
+
+                    <button
+                      className="btn-icon-sm delete"
+                      onClick={() => handleDelete(index, name)}
+                      title="Delete Member from Pool"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderItemList = () => {
     if (activeTab === 'databaseAdmin') {
       return <DatabaseAdmin />;
@@ -1081,6 +1315,9 @@ export default function AdminPanel() {
     }
     if (activeTab === 'autoAssignRules') {
       return renderAutoAssignRulesSection();
+    }
+    if (activeTab === 'teamMembers') {
+      return renderTeamMembersSection();
     }
 
     const itemList = getListForCurrentTab();
