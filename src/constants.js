@@ -44,7 +44,48 @@ export function autoAssignTeamMembers(
 
   const targetRequester = (targetProject.requesterName || '').trim().toLowerCase();
   const targetLOB = (targetProject.lineOfBusiness || '').trim().toLowerCase();
-  const targetCampaignType = (targetProject.typeOfCampaign || '').trim().toLowerCase();
+  const targetCampaignTypeRaw = (targetProject.typeOfCampaign || '').trim();
+  const targetTypeOfRequestRaw = (targetProject.typeOfRequest || '').trim();
+  const targetCampaignType = targetCampaignTypeRaw.toLowerCase();
+  const targetTypeOfRequest = targetTypeOfRequestRaw.toLowerCase();
+
+  // Role Routing Matrix Determination
+  let requiredRoleKeys = null; // null means all roles if no specific rule matches
+  const enableRoleRouting = rules.enableRoleRouting !== false;
+
+  if (enableRoleRouting) {
+    if (targetCampaignType === 'coe' || targetTypeOfRequest === 'coe') {
+      requiredRoleKeys = ['coe'];
+    } else if (targetCampaignType === 'service') {
+      requiredRoleKeys = ['campaignBuilder', 'emailQA', 'campaignQA'];
+    } else if (targetCampaignType === 'marketing') {
+      if (
+        targetTypeOfRequest === 'delivery' || 
+        targetTypeOfRequest === 'delivery + campaign' ||
+        targetTypeOfRequest === 'delivery+campaign'
+      ) {
+        requiredRoleKeys = ['emailDeveloper', 'emailQA', 'campaignBuilder', 'campaignQA'];
+      } else if (
+        targetTypeOfRequest === 'transaction message' ||
+        targetTypeOfRequest === 'transactional message' ||
+        targetTypeOfRequest === 'cmp templates' ||
+        targetTypeOfRequest === 'cmp'
+      ) {
+        requiredRoleKeys = ['emailDeveloper'];
+      } else if (
+        targetTypeOfRequest === 'sms' ||
+        targetTypeOfRequest === 'push notification' ||
+        targetTypeOfRequest === 'push' ||
+        targetTypeOfRequest === 'inapp notification' ||
+        targetTypeOfRequest === 'in-app notification' ||
+        targetTypeOfRequest === 'workflow'
+      ) {
+        requiredRoleKeys = ['campaignBuilder', 'campaignQA'];
+      } else if (targetTypeOfRequest === 'audience') {
+        requiredRoleKeys = ['audience'];
+      }
+    }
+  }
 
   const rolesConfig = [
     { key: 'emailDeveloper', optionsKey: 'emailDeveloper', title: 'Email Developer' },
@@ -56,6 +97,16 @@ export function autoAssignTeamMembers(
   ];
 
   rolesConfig.forEach(({ key, optionsKey, title }) => {
+    // Check if role is required for this campaign & request type
+    if (requiredRoleKeys !== null && !requiredRoleKeys.includes(key)) {
+      result[key] = '';
+      assignmentDetails[key] = {
+        roleTitle: title,
+        assigned: '',
+        reason: `Not required for Campaign Type "${targetCampaignTypeRaw}" & Request Type "${targetTypeOfRequestRaw}"`
+      };
+      return;
+    }
     const candidateList = teamMembers[optionsKey] || [];
     if (candidateList.length === 0) return;
 

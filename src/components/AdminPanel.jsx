@@ -4,7 +4,7 @@ import {
   Download, Upload, Users, Building, Tag, AlertCircle, Layers, ListChecks, CheckCircle2, ShieldCheck, UserCheck, ShieldAlert, Save, KeyRound, Database,
   Zap, History, Sparkles
 } from 'lucide-react';
-import { useDropdowns, ROLE_LABELS } from '../context/DropdownContext';
+import { useDropdowns, ROLE_LABELS, DEFAULT_ROLE_ROUTING_RULES } from '../context/DropdownContext';
 import { useAuth } from '../context/AuthContext';
 import { ALL_RESOURCES } from '../constants';
 import DatabaseAdmin from './DatabaseAdmin';
@@ -616,6 +616,77 @@ export default function AdminPanel() {
                 <option value={0}>Disabled (No Limit)</option>
               </select>
             </div>
+          </div>
+        </div>
+
+        {/* CAMPAIGN & REQUEST TYPE ROLE ROUTING MATRIX */}
+        <div style={{
+          background: 'rgba(15, 23, 42, 0.65)',
+          border: '1px solid #334155',
+          borderRadius: '12px',
+          padding: '1.25rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Layers size={20} color="#a855f7" />
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff' }}>Campaign & Request Type Role Routing Matrix</h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Enable Matrix Routing:</span>
+              <input
+                type="checkbox"
+                checked={rules.enableRoleRouting !== false}
+                onChange={(e) => updateAutoAssignRules({ enableRoleRouting: e.target.checked })}
+                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#6366f1' }}
+              />
+            </div>
+          </div>
+
+          <p style={{ margin: '0 0 1rem 0', fontSize: '0.84rem', color: '#94a3b8', lineHeight: '1.4' }}>
+            Determines which specific roles get auto-assigned based on the selected <strong>Campaign Type</strong> and <strong>Type of Request</strong>. Unrequired roles are automatically left empty.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {DEFAULT_ROLE_ROUTING_RULES.map(ruleItem => (
+              <div key={ruleItem.id} style={{
+                background: '#1e293b',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                padding: '0.9rem 1.1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.92rem', marginBottom: '0.25rem' }}>
+                    {ruleItem.name}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', gap: '1rem' }}>
+                    <span>Campaign: <strong style={{ color: '#38bdf8' }}>{ruleItem.campaignType}</strong></span>
+                    <span>Requests: <strong style={{ color: '#a855f7' }}>{Array.isArray(ruleItem.typeOfRequest) ? ruleItem.typeOfRequest.join(', ') : ruleItem.typeOfRequest}</strong></span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {ruleItem.rolesRequired.map(rKey => (
+                    <span key={rKey} style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      color: '#34d399',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '12px'
+                    }}>
+                      {ROLE_LABELS[rKey] || rKey}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

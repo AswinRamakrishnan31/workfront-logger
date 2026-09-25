@@ -17,7 +17,8 @@ export const DEFAULT_LOB_OPTIONS = [
 export const DEFAULT_TYPE_OF_CAMPAIGN_OPTIONS = [
   'Service',
   'Marketing',
-  'Issue fixes'
+  'Issue fixes',
+  'CoE'
 ];
 
 export const DEFAULT_PRIORITY_OPTIONS = [
@@ -38,7 +39,8 @@ export const DEFAULT_TYPE_OF_REQUEST_OPTIONS = [
   'Push notification',
   'Inapp notification',
   'Workflow',
-  'Audience'
+  'Audience',
+  'CoE'
 ];
 
 export const DEFAULT_TASK_COMPLEXITY_OPTIONS = [
@@ -85,11 +87,64 @@ export const ROLE_LABELS = {
   coe: 'CoE'
 };
 
+export const DEFAULT_ROLE_ROUTING_RULES = [
+  {
+    id: 'rule_service',
+    name: 'Service Campaigns Routing',
+    campaignType: 'Service',
+    typeOfRequest: 'Any Request',
+    rolesRequired: ['campaignBuilder', 'emailQA', 'campaignQA'],
+    active: true
+  },
+  {
+    id: 'rule_marketing_delivery',
+    name: 'Marketing - Delivery & Campaign',
+    campaignType: 'Marketing',
+    typeOfRequest: ['Delivery', 'Delivery + Campaign'],
+    rolesRequired: ['emailDeveloper', 'emailQA', 'campaignBuilder', 'campaignQA'],
+    active: true
+  },
+  {
+    id: 'rule_marketing_transactional',
+    name: 'Marketing - Transactional & CMP',
+    campaignType: 'Marketing',
+    typeOfRequest: ['Transaction message', 'CMP Templates'],
+    rolesRequired: ['emailDeveloper'],
+    active: true
+  },
+  {
+    id: 'rule_marketing_channels',
+    name: 'Marketing - SMS, Push, In-App & Workflows',
+    campaignType: 'Marketing',
+    typeOfRequest: ['SMS', 'Push notification', 'Inapp notification', 'Workflow'],
+    rolesRequired: ['campaignBuilder', 'campaignQA'],
+    active: true
+  },
+  {
+    id: 'rule_marketing_audience',
+    name: 'Marketing - Audience Data',
+    campaignType: 'Marketing',
+    typeOfRequest: ['Audience'],
+    rolesRequired: ['audience'],
+    active: true
+  },
+  {
+    id: 'rule_coe',
+    name: 'CoE Center of Excellence Routing',
+    campaignType: 'CoE',
+    typeOfRequest: ['CoE'],
+    rolesRequired: ['coe'],
+    active: true
+  }
+];
+
 export const DEFAULT_AUTO_ASSIGN_RULES = {
   enablePastHistoryPriority: true,
   maxRushRequestsPerPerson: 1,
   maxComplexRequestsPerPerson: 2,
   enableSkillMatching: true,
+  enableRoleRouting: true,
+  roleRoutingRules: DEFAULT_ROLE_ROUTING_RULES,
   weightHistory: 15,
   weightWorkload: 5
 };
