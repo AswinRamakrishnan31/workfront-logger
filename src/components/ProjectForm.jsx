@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
-import { TEAM_MEMBERS } from '../constants';
+import { Save, Zap } from 'lucide-react';
+import { TEAM_MEMBERS, autoAssignTeamMembers } from '../constants';
 import { useDropdowns } from '../context/DropdownContext';
 
 // Calculate dynamic stats for each member based on logged projects
@@ -250,6 +250,15 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
 
+  const handleAutoAssign = () => {
+    const assigned = autoAssignTeamMembers(projects, teamMembers);
+    setFormData(prev => ({
+      ...prev,
+      ...assigned,
+      status: (prev.status === 'Yet to be assigned' || !prev.status) ? 'In-Developement' : prev.status
+    }));
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -490,6 +499,32 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
               </div>
             </div>
           )}
+
+          <div className="form-group" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--surface-border)' }}>
+            <span style={{ fontWeight: 700, color: 'var(--primary-color)', fontSize: '0.95rem' }}>Team Resource Allocation</span>
+            <button
+              type="button"
+              onClick={handleAutoAssign}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.5rem 1.25rem',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.35)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Automatically assign the least-loaded team member for each role"
+            >
+              <Zap size={16} /> Auto-Assign Team (Least Workload)
+            </button>
+          </div>
 
           {visibility.showEmailDev && (
             <MultiResourceSelect

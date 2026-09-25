@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Database, ExternalLink, Filter, Upload, Download, FileSpreadsheet, Trash2, X } from 'lucide-react';
-import { TEAM_MEMBERS } from '../constants';
+import { Database, ExternalLink, Filter, Upload, Download, FileSpreadsheet, Trash2, X, Zap } from 'lucide-react';
+import { TEAM_MEMBERS, autoAssignTeamMembers } from '../constants';
 import { useDropdowns } from '../context/DropdownContext';
 import * as XLSX from 'xlsx';
 import ProjectForm from './ProjectForm';
@@ -79,6 +79,38 @@ export default function ProjectGrid({ projects, onUpdateProject, onBulkAddProjec
   const [importData, setImportData] = useState([]);
   const [importHeaders, setImportHeaders] = useState([]);
   const [columnMap, setColumnMap] = useState({});
+
+  const handleAutoAssignAllUnassigned = () => {
+    let count = 0;
+    (projects || []).forEach(p => {
+      const needsDev = !p.emailDeveloper && !p.campaignBuilder;
+      const needsQa = !p.emailQA && !p.campaignQA;
+      const needsAud = !p.audience;
+      const needsCoe = !p.coe;
+
+      if (needsDev || needsQa || needsAud || needsCoe) {
+        const autoAssigned = autoAssignTeamMembers(projects, options?.teamMembers || TEAM_MEMBERS);
+        const updated = {
+          ...p,
+          emailDeveloper: p.emailDeveloper || autoAssigned.emailDeveloper,
+          campaignBuilder: p.campaignBuilder || autoAssigned.campaignBuilder,
+          emailQA: p.emailQA || autoAssigned.emailQA,
+          campaignQA: p.campaignQA || autoAssigned.campaignQA,
+          audience: p.audience || autoAssigned.audience,
+          coe: p.coe || autoAssigned.coe,
+          status: (p.status === 'Yet to Start' || p.status === 'Yet to be assigned' || !p.status) ? 'In-Developement' : p.status
+        };
+        onUpdateProject(updated);
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      alert(`Successfully auto-assigned team resources for ${count} project(s) based on least workload balancing!`);
+    } else {
+      alert('All projects are already fully assigned!');
+    }
+  };
 
   const handleDownloadTemplate = (format = 'xlsx') => {
     const sampleRows = [
@@ -531,6 +563,15 @@ export default function ProjectGrid({ projects, onUpdateProject, onBulkAddProjec
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid #38bdf8' }}
           >
             <Upload size={16} /> Import Excel / CSV
+          </button>
+
+          <button 
+            onClick={handleAutoAssignAllUnassigned} 
+            className="btn-secondary" 
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)', color: '#a5b4fc', border: '1px solid #8b5cf6', fontWeight: 600 }}
+            title="Auto assign team members for all unassigned projects based on least workload balancing"
+          >
+            <Zap size={16} /> Auto-Assign Unassigned Projects
           </button>
         </div>
       </div>
