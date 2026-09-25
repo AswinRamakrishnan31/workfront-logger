@@ -799,10 +799,18 @@ export default function ProjectGrid({ projects, onUpdateProject, onBulkAddProjec
 
       {editingProject && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '900px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2>Edit Project</h2>
-              <button className="btn-secondary" onClick={() => setEditingProject(null)}>Close</button>
+          <div className="modal-content glass-card" style={{ maxWidth: '940px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #334155', pb: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>✏️</span>
+                <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.2rem' }}>Edit Project Details: {editingProject.projectName}</h3>
+              </div>
+              <button
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.3rem', cursor: 'pointer', padding: '0.2rem 0.5rem' }}
+                onClick={() => setEditingProject(null)}
+              >
+                ✕
+              </button>
             </div>
             <ProjectForm 
               initialData={editingProject} 

@@ -356,167 +356,210 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
   const visibility = getVisibleResources();
 
   return (
-    <div className={initialData ? '' : 'glass-panel form-panel animate-fade-in'}>
-      {!initialData && <h2 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>Log New Project</h2>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-grid">
-          
-          <div className="form-group">
-            <label htmlFor="date">Date</label>
-            <input type="date" id="date" name="date" value={formData.date || ''} onChange={handleChange} />
+    <div className={initialData ? 'project-form-container' : 'glass-panel form-panel animate-fade-in'}>
+      {!initialData && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          border: '1px solid rgba(129, 140, 248, 0.3)',
+          borderRadius: '16px',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)'
+        }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.35rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span>📝</span> Log New Workfront Campaign Project
+            </h2>
+            <p style={{ margin: '0.35rem 0 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
+              Fill in project details, configure role routing, auto-assign available team members, or submit to Staging Queue.
+            </p>
           </div>
+        </div>
+      )}
 
-          <div className="form-group">
-            <label htmlFor="expectedStartDate">Expected Start Date</label>
-            <input type="date" id="expectedStartDate" name="expectedStartDate" value={formData.expectedStartDate || ''} onChange={handleChange} />
-          </div>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        
+        {/* SECTION 1: BASIC DETAILS & SCHEDULE */}
+        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '12px', padding: '1.25rem' }}>
+          <h4 style={{ margin: '0 0 1rem 0', color: '#818cf8', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            📌 1. Basic Project Identity & Dates
+          </h4>
 
-          <div className="form-group">
-            <label htmlFor="expectedEndDate">Expected End Date</label>
-            <input type="date" id="expectedEndDate" name="expectedEndDate" value={formData.expectedEndDate || ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="projectName">WF Project Name</label>
-            <input type="text" id="projectName" name="projectName" placeholder="e.g. Q4 Marketing Campaign" value={formData.projectName || ''} onChange={handleChange} required />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="wfUrl">WF URL</label>
-            <input type="url" id="wfUrl" name="wfUrl" placeholder="https://..." value={formData.wfUrl || ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="taskName">Task Name</label>
-            <input type="text" id="taskName" name="taskName" placeholder="Enter task name" value={formData.taskName || ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="lineOfBusiness">Line of Business</label>
-            <select id="lineOfBusiness" name="lineOfBusiness" value={formData.lineOfBusiness || ''} onChange={handleChange}>
-              <option value="">Select LOB</option>
-              {lobOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="typeOfCampaign">Type of Campaign</label>
-            <select id="typeOfCampaign" name="typeOfCampaign" value={formData.typeOfCampaign || ''} onChange={handleChange}>
-              <option value="">Select Type</option>
-              {campaignTypeOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="requestorName">Requester Name</label>
-            <input type="text" id="requestorName" name="requestorName" placeholder="Name of requester" value={formData.requestorName || ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="numEmails">Number of Emails</label>
-            <input type="number" min="0" id="numEmails" name="numEmails" placeholder="e.g. 5" value={formData.numEmails ?? ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="numWorkflows">Number of Workflows</label>
-            <input type="number" min="0" id="numWorkflows" name="numWorkflows" placeholder="e.g. 2" value={formData.numWorkflows ?? ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="numSms">Number of SMS</label>
-            <input type="number" min="0" id="numSms" name="numSms" placeholder="e.g. 1" value={formData.numSms ?? ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="numInapp">Number of In-app notifications</label>
-            <input type="number" min="0" id="numInapp" name="numInapp" placeholder="e.g. 3" value={formData.numInapp ?? ''} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="priority">Priority</label>
-            <select id="priority" name="priority" value={formData.priority || ''} onChange={handleChange}>
-              <option value="">Select Priority</option>
-              {priorityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="typeOfRequest">Type of Request</label>
-            <select id="typeOfRequest" name="typeOfRequest" value={formData.typeOfRequest || ''} onChange={handleChange}>
-              <option value="">Select Type</option>
-              {typeOfRequestOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="taskComplexity">Task Complexity</label>
-            <select id="taskComplexity" name="taskComplexity" value={formData.taskComplexity || ''} onChange={handleChange}>
-              <option value="">Select Complexity</option>
-              {taskComplexityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-
-          {formData.taskComplexity === 'Custom' && (
-            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <div style={{
-                background: 'rgba(99,102,241,0.08)',
-                border: '1px solid rgba(99,102,241,0.3)',
-                borderRadius: '10px',
-                padding: '1.25rem',
-                marginTop: '0.25rem'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <span style={{ color: 'var(--primary-color)', fontWeight: 700, fontSize: '0.95rem' }}>⏱ Custom Hours by Team</span>
-                  {formData.customHours && (
-                    <span style={{ background: 'var(--primary-color)', color: '#fff', borderRadius: '20px', padding: '2px 12px', fontSize: '0.85rem', fontWeight: 700 }}>
-                      Total: {formData.customHours} hrs
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
-                  {[
-                    { role: 'emailDeveloper', label: 'Email Developer', member: formData.emailDeveloper },
-                    { role: 'emailQA', label: 'Email QA', member: formData.emailQA },
-                    { role: 'campaignBuilder', label: 'Campaign Builder', member: formData.campaignBuilder },
-                    { role: 'campaignQA', label: 'Campaign QA', member: formData.campaignQA },
-                    { role: 'audience', label: 'Audience', member: formData.audience },
-                    { role: 'coe', label: 'CoE', member: formData.coe },
-                  ].map(({ role, label, member }) => (
-                    <div key={role} style={{
-                      background: 'rgba(15,23,42,0.5)',
-                      borderRadius: '8px',
-                      padding: '0.75rem 1rem',
-                      border: '1px solid var(--surface-border)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.4rem'
-                    }}>
-                      <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>{label}</label>
-                      {member ? (
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{member}</span>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic' }}>Not assigned</span>
-                      )}
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        placeholder="Hours (e.g. 4)"
-                        value={(formData.customTeamHours || {})[role] || ''}
-                        onChange={(e) => handleTeamHoursChange(role, e.target.value)}
-                        style={{ padding: '0.4rem 0.6rem', fontSize: '0.9rem', marginTop: '0.25rem' }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="date">Log Date *</label>
+              <input type="date" id="date" name="date" value={formData.date || ''} onChange={handleChange} required />
             </div>
-          )}
 
-          <div className="form-group" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--surface-border)' }}>
-            <span style={{ fontWeight: 700, color: 'var(--primary-color)', fontSize: '0.95rem' }}>Team Resource Allocation</span>
+            <div className="form-group">
+              <label htmlFor="expectedStartDate">Expected Start Date *</label>
+              <input type="date" id="expectedStartDate" name="expectedStartDate" value={formData.expectedStartDate || ''} onChange={handleChange} required />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="expectedEndDate">Expected End Date *</label>
+              <input type="date" id="expectedEndDate" name="expectedEndDate" value={formData.expectedEndDate || ''} onChange={handleChange} required />
+            </div>
+
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label htmlFor="projectName">WF Project Name *</label>
+              <input type="text" id="projectName" name="projectName" placeholder="e.g. Q4 Holiday Campaign Promo" value={formData.projectName || ''} onChange={handleChange} required />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="wfUrl">WF URL</label>
+              <input type="url" id="wfUrl" name="wfUrl" placeholder="https://workfront.com/..." value={formData.wfUrl || ''} onChange={handleChange} />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="taskName">Task Name</label>
+              <input type="text" id="taskName" name="taskName" placeholder="Enter task name" value={formData.taskName || ''} onChange={handleChange} />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 2: BUSINESS ATTRIBUTES & PARAMETERS */}
+        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '12px', padding: '1.25rem' }}>
+          <h4 style={{ margin: '0 0 1rem 0', color: '#38bdf8', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            💼 2. Campaign Parameters & Scope Counts
+          </h4>
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="lineOfBusiness">Line of Business (LOB)</label>
+              <select id="lineOfBusiness" name="lineOfBusiness" value={formData.lineOfBusiness || ''} onChange={handleChange}>
+                <option value="">Select LOB</option>
+                {lobOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="typeOfCampaign">Type of Campaign</label>
+              <select id="typeOfCampaign" name="typeOfCampaign" value={formData.typeOfCampaign || ''} onChange={handleChange}>
+                <option value="">Select Campaign Type</option>
+                {campaignTypeOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="requestorName">Requester Name</label>
+              <input type="text" id="requestorName" name="requestorName" placeholder="Name of requester" value={formData.requestorName || ''} onChange={handleChange} />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="priority">Priority Level</label>
+              <select id="priority" name="priority" value={formData.priority || ''} onChange={handleChange}>
+                <option value="">Select Priority</option>
+                {priorityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="typeOfRequest">Type of Request</label>
+              <select id="typeOfRequest" name="typeOfRequest" value={formData.typeOfRequest || ''} onChange={handleChange}>
+                <option value="">Select Request Type</option>
+                {typeOfRequestOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="taskComplexity">Task Complexity</label>
+              <select id="taskComplexity" name="taskComplexity" value={formData.taskComplexity || ''} onChange={handleChange}>
+                <option value="">Select Complexity</option>
+                {taskComplexityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="numEmails">Emails Count</label>
+              <input type="number" min="0" id="numEmails" name="numEmails" placeholder="0" value={formData.numEmails ?? ''} onChange={handleChange} />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="numWorkflows">Workflows Count</label>
+              <input type="number" min="0" id="numWorkflows" name="numWorkflows" placeholder="0" value={formData.numWorkflows ?? ''} onChange={handleChange} />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="numSms">SMS Count</label>
+              <input type="number" min="0" id="numSms" name="numSms" placeholder="0" value={formData.numSms ?? ''} onChange={handleChange} />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="numInapp">In-App Notifications</label>
+              <input type="number" min="0" id="numInapp" name="numInapp" placeholder="0" value={formData.numInapp ?? ''} onChange={handleChange} />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 3: CUSTOM HOURS (If Complexity is Custom) */}
+        {formData.taskComplexity === 'Custom' && (
+          <div style={{
+            background: 'rgba(99,102,241,0.08)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: '12px',
+            padding: '1.25rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <span style={{ color: 'var(--primary-color)', fontWeight: 700, fontSize: '0.95rem' }}>⏱ Custom Hours Breakdown by Role</span>
+              {formData.customHours && (
+                <span style={{ background: 'var(--primary-color)', color: '#fff', borderRadius: '20px', padding: '2px 12px', fontSize: '0.85rem', fontWeight: 700 }}>
+                  Total: {formData.customHours} hrs
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+              {[
+                { role: 'emailDeveloper', label: 'Email Developer', member: formData.emailDeveloper },
+                { role: 'emailQA', label: 'Email QA', member: formData.emailQA },
+                { role: 'campaignBuilder', label: 'Campaign Builder', member: formData.campaignBuilder },
+                { role: 'campaignQA', label: 'Campaign QA', member: formData.campaignQA },
+                { role: 'audience', label: 'Audience', member: formData.audience },
+                { role: 'coe', label: 'CoE', member: formData.coe },
+              ].map(({ role, label, member }) => (
+                <div key={role} style={{
+                  background: 'rgba(15,23,42,0.5)',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1rem',
+                  border: '1px solid var(--surface-border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem'
+                }}>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0 }}>{label}</label>
+                  {member ? (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{member}</span>
+                  ) : (
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic' }}>Not assigned</span>
+                  )}
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="Hours (e.g. 4)"
+                    value={(formData.customTeamHours || {})[role] || ''}
+                    onChange={(e) => handleTeamHoursChange(role, e.target.value)}
+                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.9rem', marginTop: '0.25rem' }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION 4: TEAM RESOURCE ALLOCATION & AUTO ASSIGN */}
+        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '12px', padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <span style={{ fontWeight: 700, color: '#34d399', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              👥 3. Team Member Assignments & Auto-Dispatcher
+            </span>
             <button
               type="button"
               onClick={handleAutoAssign}
@@ -535,121 +578,119 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
                 boxShadow: '0 4px 12px rgba(99, 102, 241, 0.35)',
                 transition: 'all 0.2s ease'
               }}
-              title="Automatically assign the least-loaded team member for each role"
+              title="Automatically assign available team members based on campaign matrix, skills, and lowest workload"
             >
-              <Zap size={16} /> Auto-Assign Team (Least Workload)
+              <Zap size={16} /> Auto-Assign Team (Workload Balanced)
             </button>
           </div>
 
-          {visibility.showEmailDev && (
-            <MultiResourceSelect
-              label="Email Developer"
-              id="emailDeveloper"
-              name="emailDeveloper"
-              value={formData.emailDeveloper}
-              options={teamMembers.emailDeveloper || []}
-              projects={projects}
-              onChange={handleRoleChange}
-            />
-          )}
-
-          {visibility.showCampDev && (
-            <MultiResourceSelect
-              label="Campaign Builder"
-              id="campaignBuilder"
-              name="campaignBuilder"
-              value={formData.campaignBuilder}
-              options={teamMembers.campaignBuilder || []}
-              projects={projects}
-              onChange={handleRoleChange}
-            />
-          )}
-
-          {visibility.showEmailQA && (
-            <MultiResourceSelect
-              label="Email QA"
-              id="emailQA"
-              name="emailQA"
-              value={formData.emailQA}
-              options={teamMembers.emailQA || []}
-              projects={projects}
-              onChange={handleRoleChange}
-            />
-          )}
-
-          {visibility.showCampQA && (
-            <MultiResourceSelect
-              label="Campaign QA"
-              id="campaignQA"
-              name="campaignQA"
-              value={formData.campaignQA}
-              options={teamMembers.campaignQA || []}
-              projects={projects}
-              onChange={handleRoleChange}
-            />
-          )}
-
-          <MultiResourceSelect
-            label="Audience"
-            id="audience"
-            name="audience"
-            value={formData.audience}
-            options={teamMembers.audience || []}
-            projects={projects}
-            onChange={handleRoleChange}
-          />
-
-          <MultiResourceSelect
-            label="COE"
-            id="coe"
-            name="coe"
-            value={formData.coe}
-            options={teamMembers.coe || []}
-            projects={projects}
-            onChange={handleRoleChange}
-          />
-
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label htmlFor="status">Status</label>
-            <select id="status" name="status" value={formData.status || 'Yet to be assigned'} onChange={handleChange}>
-              {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-
-          {/* CR Tracking Section */}
-          <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--surface-border)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: formData.isCR ? '1rem' : '0' }}>
-              <input type="checkbox" name="isCR" checked={formData.isCR} onChange={handleChange} style={{ width: 'auto' }} />
-              Is this a Change Request (CR)?
-            </label>
-            
-            {formData.isCR && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                <div>
-                  <label htmlFor="crCustomHours">CR Custom Hours</label>
-                  <input type="number" min="0" step="0.5" id="crCustomHours" name="crCustomHours" placeholder="e.g. 2.5" value={formData.crCustomHours} onChange={handleChange} required />
-                </div>
-                <div>
-                  <label htmlFor="crApprovalDate">CR Shared & Approved Date/Time</label>
-                  <input type="datetime-local" id="crApprovalDate" name="crApprovalDate" value={formData.crApprovalDate} onChange={handleChange} required />
-                </div>
-              </div>
+          <div className="form-grid">
+            {visibility.showEmailDev && (
+              <MultiResourceSelect
+                label="Email Developer"
+                id="emailDeveloper"
+                name="emailDeveloper"
+                value={formData.emailDeveloper}
+                options={teamMembers.emailDeveloper || []}
+                projects={projects}
+                onChange={handleRoleChange}
+              />
             )}
+
+            {visibility.showCampDev && (
+              <MultiResourceSelect
+                label="Campaign Builder"
+                id="campaignBuilder"
+                name="campaignBuilder"
+                value={formData.campaignBuilder}
+                options={teamMembers.campaignBuilder || []}
+                projects={projects}
+                onChange={handleRoleChange}
+              />
+            )}
+
+            {visibility.showEmailQA && (
+              <MultiResourceSelect
+                label="Email QA"
+                id="emailQA"
+                name="emailQA"
+                value={formData.emailQA}
+                options={teamMembers.emailQA || []}
+                projects={projects}
+                onChange={handleRoleChange}
+              />
+            )}
+
+            {visibility.showCampQA && (
+              <MultiResourceSelect
+                label="Campaign QA"
+                id="campaignQA"
+                name="campaignQA"
+                value={formData.campaignQA}
+                options={teamMembers.campaignQA || []}
+                projects={projects}
+                onChange={handleRoleChange}
+              />
+            )}
+
+            <MultiResourceSelect
+              label="Audience"
+              id="audience"
+              name="audience"
+              value={formData.audience}
+              options={teamMembers.audience || []}
+              projects={projects}
+              onChange={handleRoleChange}
+            />
+
+            <MultiResourceSelect
+              label="COE"
+              id="coe"
+              name="coe"
+              value={formData.coe}
+              options={teamMembers.coe || []}
+              projects={projects}
+              onChange={handleRoleChange}
+            />
+
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label htmlFor="status">Overall Project Status</label>
+              <select id="status" name="status" value={formData.status || 'Yet to be assigned'} onChange={handleChange}>
+                {statusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </div>
           </div>
-
-        <div className="form-group">
-          <label htmlFor="expectedEndDate">Expected End Date</label>
-          <input type="date" id="expectedEndDate" name="expectedEndDate" value={formData.expectedEndDate} onChange={handleChange} />
         </div>
-      </div>
 
-        <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+        {/* SECTION 5: CHANGE REQUEST (CR) TRACKING */}
+        <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--surface-border)', padding: '1.25rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', margin: 0, fontWeight: 700, color: '#fbbf24' }}>
+            <input type="checkbox" name="isCR" checked={formData.isCR} onChange={handleChange} style={{ width: '18px', height: '18px', accentColor: '#eab308' }} />
+            Is this a Change Request (CR)?
+          </label>
+          
+          {formData.isCR && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1rem' }}>
+              <div>
+                <label htmlFor="crCustomHours">CR Custom Hours *</label>
+                <input type="number" min="0" step="0.5" id="crCustomHours" name="crCustomHours" placeholder="e.g. 2.5" value={formData.crCustomHours} onChange={handleChange} required />
+              </div>
+              <div>
+                <label htmlFor="crApprovalDate">CR Shared & Approved Date/Time *</label>
+                <input type="datetime-local" id="crApprovalDate" name="crApprovalDate" value={formData.crApprovalDate} onChange={handleChange} required />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SUBMIT ACTIONS FOOTER */}
+        <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
           <button
             type="button"
             onClick={(e) => handleSubmit(e, true)}
             style={{
               flex: 1,
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%)',
               color: '#c4b5fd',
               border: '1px solid #8b5cf6',
               borderRadius: '8px',

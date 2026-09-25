@@ -207,8 +207,10 @@
 
 .calendar-grid-month {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-weekday-header {
@@ -219,19 +221,27 @@
   padding: 0.5rem 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-day-cell {
   background: #1e293b;
   border: 1px solid #334155;
   border-radius: 8px;
-  min-height: 85px;
+  min-height: 95px;
+  height: 95px;
+  max-height: 95px;
   padding: 0.45rem;
   display: flex;
   flex-direction: column;
-  justify: space-between;
+  justify-content: space-between;
   cursor: pointer;
   transition: all 0.15s ease;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .calendar-day-cell:hover {
@@ -264,6 +274,9 @@
   flex-direction: column;
   gap: 3px;
   margin-top: 4px;
+  min-width: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 .calendar-task-pill {
@@ -275,6 +288,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .task-pill-dev { background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }

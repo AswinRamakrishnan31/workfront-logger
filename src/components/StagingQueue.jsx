@@ -3,6 +3,7 @@ import { Layers, CheckCircle2, XCircle, Edit3, ArrowRight, Zap, AlertCircle, Clo
 import * as XLSX from 'xlsx';
 import { TEAM_MEMBERS, autoAssignTeamMembers } from '../constants';
 import { useDropdowns } from '../context/DropdownContext';
+import ProjectForm from './ProjectForm';
 
 const REQUIRED_FIELDS = [
   { key: 'projectName', label: 'Project Name (Required)' },
@@ -728,6 +729,25 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
                     )}
 
                     <button
+                      onClick={() => setEditingStagedProject(project)}
+                      style={{
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        color: '#818cf8',
+                        border: '1px solid rgba(129, 140, 248, 0.3)',
+                        borderRadius: '8px',
+                        padding: '0.55rem 0.8rem',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem'
+                      }}
+                    >
+                      <Edit3 size={16} /> Edit
+                    </button>
+
+                    <button
                       onClick={() => handleRejectProject(project)}
                       style={{
                         background: 'rgba(239, 68, 68, 0.1)',
@@ -799,6 +819,35 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
           })}
         </div>
       )}
+
+      {/* EDIT STAGED PROJECT MODAL */}
+      {editingStagedProject && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-card" style={{ maxWidth: '940px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #334155', pb: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>✏️</span>
+                <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.2rem' }}>Edit Staged Project: {editingStagedProject.projectName}</h3>
+              </div>
+              <button
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.3rem', cursor: 'pointer', padding: '0.2rem 0.5rem' }}
+                onClick={() => setEditingStagedProject(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <ProjectForm 
+              initialData={editingStagedProject} 
+              onUpdateProject={(updated) => {
+                if (onUpdateProject) onUpdateProject(updated);
+                setEditingStagedProject(null);
+              }}
+              projects={projects}
+            />
+          </div>
+        </div>
+      )}
+
       {/* COLUMN MAPPING MODAL FOR STAGING IMPORT */}
       {isMappingModalOpen && (
         <div className="modal-overlay" style={{ zIndex: 1100 }}>

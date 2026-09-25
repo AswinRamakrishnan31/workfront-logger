@@ -50,6 +50,9 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [selectedDayDate, setSelectedDayDate] = useState(null);
 
+  // Calendar View Settings State
+  const [showTaskTitles, setShowTaskTitles] = useState(true);
+
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('active'); // 'active' | 'inProgress' | 'pendingQA' | 'urgent' | 'completed' | 'all'
@@ -451,6 +454,21 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
           </div>
 
           <div className="calendar-month-nav">
+            <button
+              className="btn-secondary"
+              onClick={() => setShowTaskTitles(prev => !prev)}
+              style={{
+                padding: '0.45rem 0.75rem',
+                fontSize: '0.78rem',
+                background: showTaskTitles ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+                borderColor: showTaskTitles ? '#818cf8' : '#334155',
+                color: showTaskTitles ? '#ffffff' : '#94a3b8'
+              }}
+              title="Toggle between displaying full project titles or compact count badges"
+            >
+              {showTaskTitles ? '🏷️ Titles: Shown' : '🏷️ Titles: Hidden'}
+            </button>
+
             <button className="btn-secondary" onClick={handlePrevMonth} style={{ padding: '0.45rem 0.75rem' }}>
               <ChevronLeft size={16} /> Prev
             </button>
@@ -489,7 +507,7 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
                 className={`calendar-day-cell ${!cell.isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
                 onClick={() => setSelectedDayDate(cell.dateStr === selectedDayDate ? null : cell.dateStr)}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
                   <span className="day-number">{cell.dayNum}</span>
                   {dayTasks.length > 0 && (
                     <span style={{ fontSize: '0.7rem', background: '#334155', color: '#f8fafc', padding: '1px 5px', borderRadius: '10px', fontWeight: 700 }}>
@@ -499,25 +517,39 @@ export default function MyDashboard({ projects = [], onUpdateProject, leaves = [
                 </div>
 
                 <div className="day-tasks-container">
-                  {dayTasks.slice(0, 2).map((p, tIdx) => {
-                    const isUrgent = p.priority === 'Urgent' || p.priority === 'Critical Business Impact';
-                    const isCompleted = p.status === 'Completed';
-                    const pillClass = isCompleted 
-                      ? 'task-pill-done' 
-                      : isUrgent 
-                      ? 'task-pill-urgent' 
-                      : (p.emailDeveloper === currentUserName ? 'task-pill-dev' : 'task-pill-qa');
+                  {showTaskTitles ? (
+                    <>
+                      {dayTasks.slice(0, 2).map((p, tIdx) => {
+                        const isUrgent = p.priority === 'Urgent' || p.priority === 'Critical Business Impact';
+                        const isCompleted = p.status === 'Completed';
+                        const pillClass = isCompleted 
+                          ? 'task-pill-done' 
+                          : isUrgent 
+                          ? 'task-pill-urgent' 
+                          : (p.emailDeveloper === currentUserName ? 'task-pill-dev' : 'task-pill-qa');
 
-                    return (
-                      <span key={tIdx} className={`calendar-task-pill ${pillClass}`} title={`${p.projectName} (${p.status})`}>
-                        {p.projectName}
+                        return (
+                          <span
+                            key={tIdx}
+                            className={`calendar-task-pill ${pillClass}`}
+                            title={`Project: ${p.projectName}\nStatus: ${p.status || 'Active'}\nLOB: ${p.lineOfBusiness || 'N/A'}\nRequester: ${p.requesterName || p.requestorName || 'N/A'}`}
+                          >
+                            {p.projectName}
+                          </span>
+                        );
+                      })}
+                      {dayTasks.length > 2 && (
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontStyle: 'italic', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          +{dayTasks.length - 2} more
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    dayTasks.length > 0 && (
+                      <span style={{ fontSize: '0.7rem', color: '#818cf8', fontWeight: 600, display: 'block', marginTop: '4px' }}>
+                        ● {dayTasks.length} task(s)
                       </span>
-                    );
-                  })}
-                  {dayTasks.length > 2 && (
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                      +{dayTasks.length - 2} more
-                    </span>
+                    )
                   )}
                 </div>
               </div>
