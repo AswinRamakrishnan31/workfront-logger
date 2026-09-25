@@ -52,11 +52,6 @@ function MainApp() {
 
   const { currentUser, permissions } = useAuth();
 
-  // MANDATORY LOGIN SCREEN IF NO CURRENT USER SESSION
-  if (!currentUser) {
-    return <LoginScreen />;
-  }
-
   // Load from REST API on mount with fallback to local storage
   const fetchProjects = async () => {
     try {
@@ -93,6 +88,7 @@ function MainApp() {
 
   // Ensure current view is allowed for user role
   useEffect(() => {
+    if (!permissions) return;
     if (view === 'form' && !permissions.canLogProjects) {
       setView('grid');
     }
@@ -100,6 +96,11 @@ function MainApp() {
       setView('grid');
     }
   }, [currentUser, permissions, view]);
+
+  // MANDATORY LOGIN SCREEN IF NO CURRENT USER SESSION
+  if (!currentUser) {
+    return <LoginScreen />;
+  }
 
   const handleAddProject = async (project) => {
     if (!permissions.canLogProjects) {
