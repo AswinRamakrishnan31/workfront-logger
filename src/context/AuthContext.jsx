@@ -182,7 +182,7 @@ export const AuthProvider = ({ children }) => {
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession);
-        if (parsed && parsed.name) return parsed;
+        if (parsed && typeof parsed.name === 'string' && parsed.name.trim().length > 0) return parsed;
       } catch (e) {}
     }
     return null; // Require login screen on initial load

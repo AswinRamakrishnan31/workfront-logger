@@ -392,32 +392,71 @@ class ErrorBoundary extends React.Component {
             border: '1px solid #334155',
             borderRadius: '16px',
             padding: '2.5rem',
-            maxWidth: '520px',
+            maxWidth: '560px',
+            width: '90%',
             textAlign: 'center',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
           }}>
             <h2 style={{ margin: '0 0 1rem 0', color: '#818cf8', fontSize: '1.5rem' }}>Workfront Logger Recovery</h2>
-            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              An unexpected render update occurred. Click below to restore session and reload dashboard.
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1rem', lineHeight: '1.5' }}>
+              An unexpected render update occurred. Click below to restore session or clear cache and reload.
             </p>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                window.location.reload();
-              }}
-              style={{
-                padding: '0.75rem 1.75rem',
-                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                color: '#ffffff',
-                border: 'none',
+            {this.state.error?.message && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid #ef4444',
+                color: '#f87171',
+                padding: '0.75rem 1rem',
                 borderRadius: '8px',
-                fontWeight: '700',
-                fontSize: '0.95rem',
-                cursor: 'pointer'
-              }}
-            >
-              Reload Dashboard
-            </button>
+                fontSize: '0.8rem',
+                marginBottom: '1.5rem',
+                wordBreak: 'break-word',
+                textAlign: 'left',
+                fontFamily: 'monospace'
+              }}>
+                <strong>Error Details:</strong> {this.state.error.message}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('wf_user_session');
+                  localStorage.removeItem('wf_remembered_credentials');
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  background: '#334155',
+                  color: '#f8fafc',
+                  border: '1px solid #475569',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Reset Session & Login
+              </button>
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '700',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Reload Dashboard
+              </button>
+            </div>
           </div>
         </div>
       );
