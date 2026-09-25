@@ -248,104 +248,43 @@ export default function ProjectGrid({ projects, onUpdateProject, onBulkAddProjec
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const bstr = evt.target.result;
-        const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
-        const wsname = wb.SheetNames.find(n => n.includes('WIP')) || wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
-        
-        if (data.length === 0) {
-          alert('No data found in the sheet.');
-          return;
-        }
-
-        const headers = Object.keys(data[0]);
-        setImportData(data);
-        setImportHeaders(headers);
-
-        // Auto-guess mapping
-        const initialMap = {};
-        REQUIRED_FIELDS.forEach(field => {
-          const match = headers.find(h => 
-            h.toLowerCase() === field.key.toLowerCase() || 
-            h.toLowerCase().includes(field.key.toLowerCase()) ||
-            field.label.toLowerCase().includes(h.toLowerCase())
-          );
-          initialMap[field.key] = match || '';
-        });
-        
-        setColumnMap(initialMap);
-        setIsMappingModalOpen(true);
-      } catch (err) {
-        console.error("Error parsing file:", err);
-        alert("Error parsing Excel file. Please ensure it's a valid XLSX/CSV format.");
-      }
-    };
-    reader.readAsBinaryString(file);
-    e.target.value = ''; // Reset
-  };
-
-  const handleConfirmImport = () => {
-    const importedProjects = importData.map((row, index) => {
-      const pNameCol = columnMap['projectName'];
-      if (!pNameCol || !row[pNameCol]) return null;
-
-      const newProject = {
-        id: 'imported_' + Date.now() + '_' + index,
-        date: new Date().toISOString().split('T')[0],
-      };
-
-      REQUIRED_FIELDS.forEach(field => {
-        const colName = columnMap[field.key];
-        let val = colName ? (row[colName] || '') : '';
-        
-        // Format dates correctly if they are JS Date objects (due to cellDates: true)
-        if (val && (field.key === 'expectedStartDate' || field.key === 'expectedEndDate')) {
-          if (val instanceof Date && !isNaN(val)) {
-            val = val.toISOString().split('T')[0];
-          } else if (typeof val === 'string' && !isNaN(Date.parse(val))) {
-            val = new Date(val).toISOString().split('T')[0];
-          }
-        }
-        
-        newProject[field.key] = val;
-      });
-
-      if (!newProject.status) newProject.status = 'Yet to Start';
-      if (!newProject.priority) newProject.priority = 'Normal';
-      if (!newProject.taskComplexity) newProject.taskComplexity = 'Simple Updates';
-      if (!newProject.typeOfRequest) newProject.typeOfRequest = 'Delivery';
-
-      // Boolean conversion for CR
-      if (typeof newProject.isCR === 'string') {
-        newProject.isCR = newProject.isCR.toLowerCase() === 'yes' || newProject.isCR.toLowerCase() === 'true';
-      } else {
-        newProject.isCR = !!newProject.isCR;
-      }
-
-      // Number conversion for counts
-      ['emailCount', 'workflowCount', 'smsCount', 'inAppCount'].forEach(c => {
-        newProject[c] = Number(newProject[c]) || 0;
-      });
-
-      return newProject;
-    }).filter(Boolean);
-
-    if (onBulkAddProjects && importedProjects.length > 0) {
-      onBulkAddProjects(importedProjects);
-      alert(`Successfully imported ${importedProjects.length} valid projects!`);
-    } else {
-      alert('No valid projects found to import. Make sure Project Name is mapped and rows are not empty.');
+  const handleExportProjects = () => {
+    if (!filteredProjects || filteredProjects.length === 0) {
+      alert("No projects available to export.");
+      return;
     }
-    
-    setIsMappingModalOpen(false);
+
+    const exportRows = filteredProjects.map(p => ({
+      'Project ID': p.id || '',
+      'Project Name': p.projectName || '',
+      'Workfront URL': p.wfUrl || '',
+      'Task Name': p.taskName || '',
+      'Line of Business': p.lineOfBusiness || '',
+      'Type of Campaign': p.typeOfCampaign || '',
+      'Requester Name': p.requesterName || p.requestorName || '',
+      'Expected Start Date': p.expectedStartDate || '',
+      'Expected End Date': p.expectedEndDate || '',
+      'Priority': p.priority || '',
+      'Type of Request': p.typeOfRequest || '',
+      'Task Complexity': p.taskComplexity || '',
+      'Status': p.status || '',
+      'Email Developer': p.emailDeveloper || '',
+      'Campaign Builder': p.campaignBuilder || '',
+      'Email QA': p.emailQA || '',
+      'Campaign QA': p.campaignQA || '',
+      'Audience': p.audience || '',
+      'CoE': p.coe || '',
+      'Email Count': p.numEmails || p.emailCount || 0,
+      'Workflow Count': p.numWorkflows || p.workflowCount || 0,
+      'SMS Count': p.numSms || p.smsCount || 0,
+      'In-App Count': p.numInapp || p.inAppCount || 0
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Workfront Projects");
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Workfront_Projects_Export_${dateStr}.xlsx`);
   };
 
   const isDateInRange = (dateStr, rangeType, customStart, customEnd) => {
@@ -536,39 +475,25 @@ export default function ProjectGrid({ projects, onUpdateProject, onBulkAddProjec
             </button>
           )}
 
-          
-          <input 
-            type="file" 
-            accept=".xlsx,.xls,.csv" 
-            style={{ display: 'none' }} 
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-          />
-
           <button 
-            onClick={() => handleDownloadTemplate('xlsx')} 
-            className="btn-secondary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid #22c55e' }}
-            title="Download pre-formatted Excel template (.xlsx)"
+            onClick={handleExportProjects} 
+            className="btn-primary" 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.6rem 1.1rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}
+            title="Export viewable projects to Excel spreadsheet (.xlsx)"
           >
-            <Download size={16} /> Excel Template
-          </button>
-          
-          <button 
-            onClick={() => handleDownloadTemplate('csv')} 
-            className="btn-secondary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', color: '#c084fc', border: '1px solid #c084fc' }}
-            title="Download pre-formatted CSV template (.csv)"
-          >
-            <FileSpreadsheet size={16} /> CSV Template
-          </button>
-
-          <button 
-            onClick={() => fileInputRef.current?.click()} 
-            className="btn-secondary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid #38bdf8' }}
-          >
-            <Upload size={16} /> Import Excel / CSV
+            <Download size={16} /> Export Projects (.xlsx)
           </button>
 
           <button 

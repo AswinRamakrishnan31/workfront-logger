@@ -293,7 +293,7 @@ function MainApp() {
       <main className="main-content">
         {view === 'form' && permissions.canLogProjects && <ProjectForm onAddProject={handleAddProject} projects={projects} />}
         {view === 'grid' && <ProjectGrid projects={projects} onUpdateProject={handleUpdateProject} onBulkAddProjects={handleBulkAddProjects} onClearProjects={handleClearProjects} onDeleteProjects={handleDeleteProjects} />}
-        {view === 'staging' && <StagingQueue projects={projects} onUpdateProject={handleUpdateProject} onDeleteProjects={handleDeleteProjects} />}
+        {view === 'staging' && <StagingQueue projects={projects} onUpdateProject={handleUpdateProject} onDeleteProjects={handleDeleteProjects} onBulkAddProjects={handleBulkAddProjects} />}
         {view === 'sla' && <SLAMasterModule readOnly={!permissions.canUpdateSLA} />}
         {view === 'scrum' && <ScrumDashboard projects={projects} />}
         {view === 'campaignOps' && <CampaignOpsDashboard projects={projects} />}

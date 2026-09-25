@@ -1,10 +1,152 @@
-import React, { useState } from 'react';
-import { Layers, CheckCircle2, XCircle, Edit3, ArrowRight, Zap, AlertCircle, Clock, Archive, RefreshCw, ShieldAlert } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Layers, CheckCircle2, XCircle, Edit3, ArrowRight, Zap, AlertCircle, Clock, Archive, RefreshCw, ShieldAlert, Upload, Download, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { TEAM_MEMBERS, autoAssignTeamMembers } from '../constants';
+import { useDropdowns } from '../context/DropdownContext';
 
-export default function StagingQueue({ projects = [], onUpdateProject, onDeleteProjects }) {
+const REQUIRED_FIELDS = [
+  { key: 'projectName', label: 'Project Name (Required)' },
+  { key: 'expectedStartDate', label: 'Expected Start Date' },
+  { key: 'expectedEndDate', label: 'Expected End Date' },
+  { key: 'status', label: 'Status' },
+  { key: 'lineOfBusiness', label: 'Line of Business' },
+  { key: 'typeOfCampaign', label: 'Type of Campaign' },
+  { key: 'requesterName', label: 'Requester Name' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'typeOfRequest', label: 'Type of Request' },
+  { key: 'taskComplexity', label: 'Task Complexity' },
+  { key: 'emailDeveloper', label: 'Email Developer' },
+  { key: 'campaignBuilder', label: 'Campaign Builder' },
+  { key: 'emailQA', label: 'Email QA' },
+  { key: 'campaignQA', label: 'Campaign QA' },
+  { key: 'audience', label: 'Audience' },
+  { key: 'coe', label: 'CoE' },
+  { key: 'numEmails', label: 'Email Count' },
+  { key: 'numWorkflows', label: 'Workflow Count' },
+  { key: 'numSms', label: 'SMS Count' },
+  { key: 'numInapp', label: 'In-app Count' }
+];
+
+export default function StagingQueue({ projects = [], onUpdateProject, onDeleteProjects, onBulkAddProjects }) {
+  const { options } = useDropdowns();
+
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'archive'
   const [selectedStagedIds, setSelectedStagedIds] = useState([]);
   const [editingStagedProject, setEditingStagedProject] = useState(null);
+
+  // Excel / CSV Import States
+  const [isMappingModalOpen, setIsMappingModalOpen] = useState(false);
+  const [importData, setImportData] = useState([]);
+  const [importHeaders, setImportHeaders] = useState([]);
+  const [columnMap, setColumnMap] = useState({});
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
+        const wsname = wb.SheetNames.find(n => n.includes('WIP')) || wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        
+        if (data.length === 0) {
+          alert('No data found in the sheet.');
+          return;
+        }
+
+        const headers = Object.keys(data[0]);
+        setImportData(data);
+        setImportHeaders(headers);
+
+        const initialMap = {};
+        REQUIRED_FIELDS.forEach(field => {
+          const match = headers.find(h => 
+            h.toLowerCase() === field.key.toLowerCase() || 
+            h.toLowerCase().includes(field.key.toLowerCase()) ||
+            field.label.toLowerCase().includes(h.toLowerCase())
+          );
+          initialMap[field.key] = match || '';
+        });
+        
+        setColumnMap(initialMap);
+        setIsMappingModalOpen(true);
+      } catch (err) {
+        console.error("Error parsing file:", err);
+        alert("Error parsing file. Please ensure it's a valid XLSX/CSV format.");
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
+  };
+
+  const handleConfirmImport = () => {
+    const importedProjects = importData.map((row, index) => {
+      const pNameCol = columnMap['projectName'];
+      if (!pNameCol || !row[pNameCol]) return null;
+
+      const newStagingId = `STG-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+
+      const newProject = {
+        id: newStagingId,
+        date: new Date().toISOString().split('T')[0],
+        stagedAt: new Date().toISOString(),
+        isStaged: true,
+        status: 'Staged (Imported)'
+      };
+
+      REQUIRED_FIELDS.forEach(field => {
+        const colName = columnMap[field.key];
+        let val = colName ? (row[colName] || '') : '';
+        
+        if (val && (field.key === 'expectedStartDate' || field.key === 'expectedEndDate')) {
+          if (val instanceof Date && !isNaN(val)) {
+            val = val.toISOString().split('T')[0];
+          } else if (typeof val === 'string' && !isNaN(Date.parse(val))) {
+            val = new Date(val).toISOString().split('T')[0];
+          }
+        }
+        
+        newProject[field.key] = val;
+      });
+
+      if (!newProject.priority) newProject.priority = 'Normal';
+      if (!newProject.taskComplexity) newProject.taskComplexity = 'Simple Updates';
+
+      // Auto-assign team members if needed
+      const autoAssigned = autoAssignTeamMembers(
+        projects,
+        options?.teamMembers || TEAM_MEMBERS,
+        newProject,
+        options?.autoAssignRules,
+        options?.resourceSkills
+      );
+
+      newProject.emailDeveloper = newProject.emailDeveloper || autoAssigned.emailDeveloper || '';
+      newProject.campaignBuilder = newProject.campaignBuilder || autoAssigned.campaignBuilder || '';
+      newProject.emailQA = newProject.emailQA || autoAssigned.emailQA || '';
+      newProject.campaignQA = newProject.campaignQA || autoAssigned.campaignQA || '';
+      newProject.audience = newProject.audience || autoAssigned.audience || '';
+      newProject.coe = newProject.coe || autoAssigned.coe || '';
+
+      return newProject;
+    }).filter(Boolean);
+
+    if (importedProjects.length > 0) {
+      if (onBulkAddProjects) {
+        onBulkAddProjects(importedProjects);
+      }
+      alert(`Successfully imported ${importedProjects.length} project(s) directly into the Staging Queue!`);
+    } else {
+      alert('No valid projects found to import. Make sure Project Name is mapped.');
+    }
+    
+    setIsMappingModalOpen(false);
+  };
 
   const RETENTION_DAYS = 7;
   const nowMs = Date.now();
@@ -155,6 +297,34 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            style={{ display: 'none' }}
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="btn-secondary"
+            style={{
+              background: 'rgba(56, 189, 248, 0.15)',
+              color: '#38bdf8',
+              border: '1px solid #38bdf8',
+              borderRadius: '8px',
+              padding: '0.6rem 1rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Import Excel or CSV projects directly into the Staging Queue"
+          >
+            <Upload size={16} /> Import Excel / CSV to Staging
+          </button>
           <button
             onClick={handleAutoArchiveExpired}
             className="btn-secondary"
@@ -462,6 +632,54 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
               </div>
             );
           })}
+        </div>
+      )}
+      {/* COLUMN MAPPING MODAL FOR STAGING IMPORT */}
+      {isMappingModalOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '650px', width: '90%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#f8fafc' }}>Map Columns to Staging Fields</h3>
+                <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
+                  Importing {importData.length} project(s) into Staging Queue
+                </span>
+              </div>
+              <button className="btn-secondary" onClick={() => setIsMappingModalOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', background: 'rgba(15,23,42,0.6)', padding: '1rem', borderRadius: '8px', maxHeight: '50vh', overflowY: 'auto' }}>
+              <div style={{ fontWeight: 'bold', color: '#94a3b8', borderBottom: '1px solid #334155', paddingBottom: '0.5rem' }}>Workfront Field</div>
+              <div style={{ fontWeight: 'bold', color: '#94a3b8', borderBottom: '1px solid #334155', paddingBottom: '0.5rem' }}>File Column Header</div>
+              
+              {REQUIRED_FIELDS.map(field => (
+                <React.Fragment key={field.key}>
+                  <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem', color: '#f1f5f9' }}>
+                    {field.label}
+                  </div>
+                  <select 
+                    value={columnMap[field.key] || ''} 
+                    onChange={(e) => setColumnMap(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    style={{ background: '#0f172a', border: '1px solid #475569', color: '#ffffff', padding: '0.45rem', borderRadius: '6px', fontSize: '0.85rem' }}
+                  >
+                    <option value="">-- Ignore / Not Present --</option>
+                    {importHeaders.map(h => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
+                </React.Fragment>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.25rem' }}>
+              <button className="btn-secondary" onClick={() => setIsMappingModalOpen(false)}>Cancel</button>
+              <button className="btn-primary" onClick={handleConfirmImport} style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)', color: '#fff', border: 'none', fontWeight: 700 }}>
+                Confirm Import to Staging
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
