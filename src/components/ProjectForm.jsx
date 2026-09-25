@@ -251,7 +251,13 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
   }, [initialData]);
 
   const handleAutoAssign = () => {
-    const assigned = autoAssignTeamMembers(projects, teamMembers);
+    const assigned = autoAssignTeamMembers(
+      projects,
+      teamMembers,
+      formData,
+      options?.autoAssignRules,
+      options?.resourceSkills
+    );
     setFormData(prev => ({
       ...prev,
       ...assigned,

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { 
   Sliders, Plus, Edit2, Trash2, ArrowUp, ArrowDown, Check, X, RotateCcw, 
-  Download, Upload, Users, Building, Tag, AlertCircle, Layers, ListChecks, CheckCircle2, ShieldCheck, UserCheck, ShieldAlert, Save, KeyRound, Database
+  Download, Upload, Users, Building, Tag, AlertCircle, Layers, ListChecks, CheckCircle2, ShieldCheck, UserCheck, ShieldAlert, Save, KeyRound, Database,
+  Zap, History, Sparkles
 } from 'lucide-react';
 import { useDropdowns, ROLE_LABELS } from '../context/DropdownContext';
 import { useAuth } from '../context/AuthContext';
@@ -37,7 +38,10 @@ export default function AdminPanel() {
     resetCategory,
     resetAllDefaults,
     exportOptionsJSON,
-    importOptionsJSON
+    importOptionsJSON,
+    updateAutoAssignRules,
+    addSkillToResource,
+    removeSkillFromResource
   } = useDropdowns();
 
   const { userRoles, updateUserRole, groupDefinitions, saveGroupDefinition, deleteGroupDefinition } = useAuth();
@@ -47,6 +51,10 @@ export default function AdminPanel() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingText, setEditingText] = useState('');
   const [userSearchTerm, setUserSearchTerm] = useState('');
+
+  // Auto-Assignment & Skill State
+  const [skillRoleKey, setSkillRoleKey] = useState('emailDeveloper');
+  const [newSkillInputs, setNewSkillInputs] = useState({});
 
   // Group Editing State
   const [selectedGroupToEdit, setSelectedGroupToEdit] = useState('Admin');
@@ -64,6 +72,7 @@ export default function AdminPanel() {
     { key: 'databaseAdmin', label: 'DB Backup, Memory & Archival', icon: Database },
     { key: 'userGroups', label: 'User Groups & Module Access', icon: KeyRound },
     { key: 'userAccess', label: 'User Role Assignments', icon: ShieldCheck },
+    { key: 'autoAssignRules', label: 'Auto-Assignment Rules & Resource Skills', icon: Sliders },
     { key: 'lob', label: 'Line of Business', icon: Building, optionKey: 'lobOptions' },
     { key: 'campaignType', label: 'Type of Campaign', icon: Tag, optionKey: 'campaignTypeOptions' },
     { key: 'priority', label: 'Priority', icon: AlertCircle, optionKey: 'priorityOptions' },
@@ -455,6 +464,288 @@ export default function AdminPanel() {
     );
   };
 
+  const renderAutoAssignRulesSection = () => {
+    const rules = options.autoAssignRules || {};
+    const resourceSkills = options.resourceSkills || {};
+    const teamMembers = options.teamMembers || {};
+    const currentMembers = teamMembers[skillRoleKey] || [];
+
+    const handleAddSkill = (resName) => {
+      const val = newSkillInputs[resName]?.trim();
+      if (val) {
+        addSkillToResource(resName, val);
+        setNewSkillInputs(prev => ({ ...prev, [resName]: '' }));
+      }
+    };
+
+    return (
+      <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* RULE CONFIGURATION CARDS */}
+        <div style={{
+          background: 'rgba(15, 23, 42, 0.65)',
+          border: '1px solid #334155',
+          borderRadius: '12px',
+          padding: '1.25rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+            <Sliders size={20} color="#818cf8" />
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff' }}>Auto-Assignment Rule Configuration</h3>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {/* Rule 1: History Priority */}
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '8px',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justify: 'space-between'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '0.5rem' }}>
+                  <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <History size={16} color="#38bdf8" /> Prior History Priority
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={rules.enablePastHistoryPriority !== false}
+                    onChange={(e) => updateAutoAssignRules({ enablePastHistoryPriority: e.target.checked })}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#6366f1' }}
+                  />
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.4' }}>
+                  Prioritizes team members who have previously completed projects for the same <strong>Requester</strong>, <strong>LOB</strong>, or <strong>Campaign Type</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Rule 2: Skill Matching */}
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '8px',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              justify: 'space-between'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '0.5rem' }}>
+                  <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Sparkles size={16} color="#a855f7" /> Skill Matching Engine
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={rules.enableSkillMatching !== false}
+                    onChange={(e) => updateAutoAssignRules({ enableSkillMatching: e.target.checked })}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#6366f1' }}
+                  />
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.4' }}>
+                  Enforces matching member skillsets (e.g. AMPScript, SFMC, QA Validation) to request requirements.
+                </p>
+              </div>
+            </div>
+
+            {/* Rule 3: Max Rush Requests Cap */}
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '8px',
+              padding: '1rem'
+            }}>
+              <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                <ShieldAlert size={16} color="#ef4444" /> Max Rush Requests Cap
+              </span>
+              <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.4' }}>
+                Skip resource if currently working on <strong>Rush / Urgent</strong> active projects.
+              </p>
+              <select
+                value={rules.maxRushRequestsPerPerson !== undefined ? rules.maxRushRequestsPerPerson : 1}
+                onChange={(e) => updateAutoAssignRules({ maxRushRequestsPerPerson: Number(e.target.value) })}
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 0.75rem',
+                  background: '#0f172a',
+                  border: '1px solid #475569',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.85rem'
+                }}
+              >
+                <option value={1}>Max 1 Rush Request (Default)</option>
+                <option value={2}>Max 2 Rush Requests</option>
+                <option value={0}>Disabled (No Limit)</option>
+              </select>
+            </div>
+
+            {/* Rule 4: Max Complex Requests Cap */}
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '8px',
+              padding: '1rem'
+            }}>
+              <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                <ListChecks size={16} color="#f59e0b" /> Max Complex Requests Cap
+              </span>
+              <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.4' }}>
+                Skip resource if currently working on <strong>Complex / Custom</strong> active projects.
+              </p>
+              <select
+                value={rules.maxComplexRequestsPerPerson !== undefined ? rules.maxComplexRequestsPerPerson : 2}
+                onChange={(e) => updateAutoAssignRules({ maxComplexRequestsPerPerson: Number(e.target.value) })}
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 0.75rem',
+                  background: '#0f172a',
+                  border: '1px solid #475569',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.85rem'
+                }}
+              >
+                <option value={2}>Max 2 Complex Requests (Default)</option>
+                <option value={1}>Max 1 Complex Request</option>
+                <option value={3}>Max 3 Complex Requests</option>
+                <option value={0}>Disabled (No Limit)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* RESOURCE SKILLS DIRECTORY */}
+        <div style={{
+          background: 'rgba(15, 23, 42, 0.65)',
+          border: '1px solid #334155',
+          borderRadius: '12px',
+          padding: '1.25rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Users size={20} color="#38bdf8" />
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff' }}>Resource Skills Matrix & Tracking</h3>
+            </div>
+          </div>
+
+          {/* Sub-role Role Tabs */}
+          <div className="admin-subroles-bar" style={{ marginBottom: '1.25rem' }}>
+            {Object.keys(ROLE_LABELS).map(roleKey => (
+              <button
+                key={roleKey}
+                className={`admin-subrole-btn ${skillRoleKey === roleKey ? 'active' : ''}`}
+                onClick={() => setSkillRoleKey(roleKey)}
+              >
+                {ROLE_LABELS[roleKey]} ({teamMembers[roleKey]?.length || 0})
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {currentMembers.map(resName => {
+              const skills = resourceSkills[resName] || [];
+              const currInputValue = newSkillInputs[resName] || '';
+
+              return (
+                <div key={resName} style={{
+                  background: '#1e293b',
+                  border: '1px solid #334155',
+                  borderRadius: '10px',
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <UserCheck size={18} color="#818cf8" />
+                      <span style={{ fontWeight: 700, color: '#f8fafc', fontSize: '0.98rem' }}>{resName}</span>
+                      <span style={{ fontSize: '0.75rem', background: '#334155', color: '#cbd5e1', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                        {ROLE_LABELS[skillRoleKey]}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Skills Pills */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+                    {skills.map((s, idx) => (
+                      <span key={idx} style={{
+                        background: 'rgba(99, 102, 241, 0.18)',
+                        border: '1px solid rgba(129, 140, 248, 0.4)',
+                        color: '#c7d2fe',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem'
+                      }}>
+                        {s}
+                        <X
+                          size={12}
+                          style={{ cursor: 'pointer', color: '#a5b4fc' }}
+                          onClick={() => removeSkillFromResource(resName, s)}
+                        />
+                      </span>
+                    ))}
+
+                    {/* Add Skill Inline Form */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <input
+                        type="text"
+                        placeholder="+ Add skill..."
+                        value={currInputValue}
+                        onChange={(e) => setNewSkillInputs(prev => ({ ...prev, [resName]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddSkill(resName);
+                          }
+                        }}
+                        style={{
+                          padding: '0.25rem 0.6rem',
+                          background: '#0f172a',
+                          border: '1px solid #475569',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '0.8rem',
+                          width: '130px'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddSkill(resName)}
+                        style={{
+                          background: '#3b82f6',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '0.25rem 0.55rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderItemList = () => {
     if (activeTab === 'databaseAdmin') {
       return <DatabaseAdmin />;
@@ -464,6 +755,9 @@ export default function AdminPanel() {
     }
     if (activeTab === 'userAccess') {
       return renderUserAccessTable();
+    }
+    if (activeTab === 'autoAssignRules') {
+      return renderAutoAssignRulesSection();
     }
 
     const itemList = getListForCurrentTab();
@@ -637,7 +931,7 @@ export default function AdminPanel() {
         <div className="admin-content">
           <div className="admin-content-header">
             <h3>{currentCategory?.label}</h3>
-            {activeTab !== 'databaseAdmin' && activeTab !== 'userGroups' && activeTab !== 'userAccess' && activeTab !== 'teamMembers' && (
+            {activeTab !== 'databaseAdmin' && activeTab !== 'userGroups' && activeTab !== 'userAccess' && activeTab !== 'autoAssignRules' && activeTab !== 'teamMembers' && (
               <button
                 className="btn-text-sm"
                 onClick={handleResetCurrent}
@@ -667,8 +961,8 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* ADD INPUT FORM (Hide on DB Admin, User Groups & User Access Tabs) */}
-          {activeTab !== 'databaseAdmin' && activeTab !== 'userGroups' && activeTab !== 'userAccess' && (
+          {/* ADD INPUT FORM (Hide on DB Admin, User Groups, User Access & AutoAssign Tabs) */}
+          {activeTab !== 'databaseAdmin' && activeTab !== 'userGroups' && activeTab !== 'userAccess' && activeTab !== 'autoAssignRules' && (
             <form onSubmit={handleAdd} className="admin-add-form">
               <input
                 type="text"

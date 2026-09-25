@@ -89,7 +89,13 @@ export default function ProjectGrid({ projects, onUpdateProject, onBulkAddProjec
       const needsCoe = !p.coe;
 
       if (needsDev || needsQa || needsAud || needsCoe) {
-        const autoAssigned = autoAssignTeamMembers(projects, options?.teamMembers || TEAM_MEMBERS);
+        const autoAssigned = autoAssignTeamMembers(
+          projects,
+          options?.teamMembers || TEAM_MEMBERS,
+          p,
+          options?.autoAssignRules,
+          options?.resourceSkills
+        );
         const updated = {
           ...p,
           emailDeveloper: p.emailDeveloper || autoAssigned.emailDeveloper,

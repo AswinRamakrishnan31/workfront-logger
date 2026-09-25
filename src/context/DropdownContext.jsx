@@ -85,6 +85,39 @@ export const ROLE_LABELS = {
   coe: 'CoE'
 };
 
+export const DEFAULT_AUTO_ASSIGN_RULES = {
+  enablePastHistoryPriority: true,
+  maxRushRequestsPerPerson: 1,
+  maxComplexRequestsPerPerson: 2,
+  enableSkillMatching: true,
+  weightHistory: 15,
+  weightWorkload: 5
+};
+
+export const DEFAULT_RESOURCE_SKILLS = {
+  'Subhasri': ['HTML/CSS', 'AMPScript', 'SFMC Email Studio', 'Responsive Email'],
+  'Mohanapriya': ['HTML/CSS', 'SFMC Email Studio', 'Dynamic Content'],
+  'Sudharsanan': ['HTML/CSS', 'AMPScript', 'SQL', 'Interactive Email'],
+  'Jerrald': ['HTML/CSS', 'Veeva Email', 'Litmus Testing'],
+  'Meshak': ['HTML/CSS', 'AMPScript', 'Dark Mode Email'],
+  'Samrajkumar': ['HTML/CSS', 'SFMC Email Studio', 'Automation Studio'],
+  'Indrajit': ['SFMC Journey Builder', 'Automation Studio', 'Contact Builder'],
+  'Ambarish': ['SFMC Journey Builder', 'SQL Query', 'API Triggered Send'],
+  'Shankar': ['SFMC Journey Builder', 'CloudPages', 'Automation Studio'],
+  'Gowsalya': ['SFMC Journey Builder', 'Data Extensions', 'Transactional Messaging'],
+  'Dharshan': ['SFMC Journey Builder', 'MobilePush', 'In-App Comms'],
+  'Sivashankar': ['SFMC Journey Builder', 'SMS Messaging', 'Automation Studio'],
+  'Sathyaleka': ['SFMC Journey Builder', 'Analytics Tracking', 'Journey Testing'],
+  'Jagadesh': ['Email QA', 'Litmus / Email on Acid', 'Cross-Client Testing', 'Link & Tracking Audit'],
+  'Niranjana': ['Email QA', 'Litmus / Email on Acid', 'Accessibility QA', 'HTML Validation'],
+  'Thiyagaraj': ['Campaign QA', 'Journey Testing', 'Data Extension QA', 'End-to-End Flow Audit'],
+  'Suwetha': ['Campaign QA', 'Journey Testing', 'Audience Segment QA', 'Payload Validation'],
+  'Nandha': ['Audience Segmentation', 'SQL Query', 'Data Extension Filtering'],
+  'Preeth': ['Audience Segmentation', 'Contact Builder', 'SQL Query'],
+  'Sathya': ['CoE Strategy', 'Deliverability Audit', 'Template Architecture'],
+  'Preetha': ['CoE Strategy', 'Compliance Audit', 'Governance & Standards']
+};
+
 const INITIAL_STATE = {
   lobOptions: DEFAULT_LOB_OPTIONS,
   campaignTypeOptions: DEFAULT_TYPE_OF_CAMPAIGN_OPTIONS,
@@ -92,7 +125,9 @@ const INITIAL_STATE = {
   typeOfRequestOptions: DEFAULT_TYPE_OF_REQUEST_OPTIONS,
   taskComplexityOptions: DEFAULT_TASK_COMPLEXITY_OPTIONS,
   statusOptions: DEFAULT_STATUS_OPTIONS,
-  teamMembers: DEFAULT_TEAM_MEMBERS
+  teamMembers: DEFAULT_TEAM_MEMBERS,
+  autoAssignRules: DEFAULT_AUTO_ASSIGN_RULES,
+  resourceSkills: DEFAULT_RESOURCE_SKILLS
 };
 
 const DropdownContext = createContext();
@@ -110,7 +145,9 @@ export function DropdownProvider({ children }) {
           typeOfRequestOptions: parsed.typeOfRequestOptions || DEFAULT_TYPE_OF_REQUEST_OPTIONS,
           taskComplexityOptions: parsed.taskComplexityOptions || DEFAULT_TASK_COMPLEXITY_OPTIONS,
           statusOptions: parsed.statusOptions || DEFAULT_STATUS_OPTIONS,
-          teamMembers: { ...DEFAULT_TEAM_MEMBERS, ...(parsed.teamMembers || {}) }
+          teamMembers: { ...DEFAULT_TEAM_MEMBERS, ...(parsed.teamMembers || {}) },
+          autoAssignRules: { ...DEFAULT_AUTO_ASSIGN_RULES, ...(parsed.autoAssignRules || {}) },
+          resourceSkills: { ...DEFAULT_RESOURCE_SKILLS, ...(parsed.resourceSkills || {}) }
         };
       }
     } catch (e) {
@@ -346,6 +383,56 @@ export function DropdownProvider({ children }) {
     }
   };
 
+  // Auto-Assignment & Resource Skill Helper Actions
+  const updateAutoAssignRules = (newRules) => {
+    setOptions(prev => ({
+      ...prev,
+      autoAssignRules: {
+        ...(prev.autoAssignRules || DEFAULT_AUTO_ASSIGN_RULES),
+        ...newRules
+      }
+    }));
+  };
+
+  const updateResourceSkills = (resourceName, skillsArray) => {
+    setOptions(prev => ({
+      ...prev,
+      resourceSkills: {
+        ...(prev.resourceSkills || DEFAULT_RESOURCE_SKILLS),
+        [resourceName]: skillsArray
+      }
+    }));
+  };
+
+  const addSkillToResource = (resourceName, skill) => {
+    const trimmed = skill.trim();
+    if (!trimmed) return;
+    setOptions(prev => {
+      const currentSkills = prev.resourceSkills?.[resourceName] || [];
+      if (currentSkills.includes(trimmed)) return prev;
+      return {
+        ...prev,
+        resourceSkills: {
+          ...(prev.resourceSkills || DEFAULT_RESOURCE_SKILLS),
+          [resourceName]: [...currentSkills, trimmed]
+        }
+      };
+    });
+  };
+
+  const removeSkillFromResource = (resourceName, skill) => {
+    setOptions(prev => {
+      const currentSkills = prev.resourceSkills?.[resourceName] || [];
+      return {
+        ...prev,
+        resourceSkills: {
+          ...(prev.resourceSkills || DEFAULT_RESOURCE_SKILLS),
+          [resourceName]: currentSkills.filter(s => s !== skill)
+        }
+      };
+    });
+  };
+
   const value = {
     options,
     allResources,
@@ -363,7 +450,11 @@ export function DropdownProvider({ children }) {
     resetCategory,
     resetAllDefaults,
     exportOptionsJSON,
-    importOptionsJSON
+    importOptionsJSON,
+    updateAutoAssignRules,
+    updateResourceSkills,
+    addSkillToResource,
+    removeSkillFromResource
   };
 
   return (
