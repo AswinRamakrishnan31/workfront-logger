@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Zap } from 'lucide-react';
+import { Save, Zap, Layers } from 'lucide-react';
 import { TEAM_MEMBERS, autoAssignTeamMembers } from '../constants';
 import { useDropdowns } from '../context/DropdownContext';
 
@@ -284,17 +284,22 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (e, submitToStaging = false) => {
+    if (e) e.preventDefault();
+    const finalData = {
+      ...formData,
+      status: submitToStaging ? 'Staged' : (formData.status || 'In-Developement'),
+      isStaged: submitToStaging
+    };
+
     if (initialData && initialData.id) {
       if (onUpdateProject) {
-        onUpdateProject({ ...formData, id: initialData.id });
+        onUpdateProject({ ...finalData, id: initialData.id });
       }
     } else {
       if (onAddProject) {
-        onAddProject({ ...formData, id: Date.now().toString() });
+        onAddProject({ ...finalData, id: Date.now().toString() });
       }
-      // Reset form for new project
       setFormData({ ...emptyForm, date: new Date().toISOString().split('T')[0] });
     }
   };
@@ -628,10 +633,33 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
         </div>
       </div>
 
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+        <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+          <button
+            type="button"
+            onClick={(e) => handleSubmit(e, true)}
+            style={{
+              flex: 1,
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+              color: '#c4b5fd',
+              border: '1px solid #8b5cf6',
+              borderRadius: '8px',
+              padding: '0.75rem 1.25rem',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem'
+            }}
+            title="Submit project to Staging Queue for review & approval before publishing live"
+          >
+            <Layers size={18} /> Submit to Staging Queue
+          </button>
+
+          <button type="submit" onClick={(e) => handleSubmit(e, false)} className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
             <Save size={18} />
-            {initialData ? 'Update Project' : 'Log Project'}
+            {initialData ? 'Update Project' : 'Publish Directly'}
           </button>
         </div>
       </form>

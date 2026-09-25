@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, LayoutGrid, Table, Briefcase, BarChart2, Users, Sliders, LogIn, User } from 'lucide-react';
+import { PlusCircle, LayoutGrid, Table, Briefcase, BarChart2, Users, Sliders, LogIn, User, Layers } from 'lucide-react';
 import ProjectForm from './components/ProjectForm';
 import ProjectGrid from './components/ProjectGrid';
 import SLAMasterModule from './components/SLAMasterModule';
@@ -7,6 +7,7 @@ import ScrumDashboard from './components/ScrumDashboard';
 import CampaignOpsDashboard from './components/CampaignOpsDashboard';
 import DeploymentCalendar from './components/DeploymentCalendar';
 import ResourceLoading from './components/ResourceLoading';
+import StagingQueue from './components/StagingQueue';
 import AdminPanel from './components/AdminPanel';
 import LoginModal from './components/LoginModal';
 import { DropdownProvider } from './context/DropdownContext';
@@ -247,6 +248,28 @@ function MainApp() {
           </button>
 
           <button 
+            className={view === 'staging' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setView('staging')}
+            style={{ position: 'relative' }}
+          >
+            <Layers size={18} />
+            Staging Queue
+            {projects.filter(p => p.status === 'Staged' || p.status === 'Pending Approval' || p.isStaged).length > 0 && (
+              <span style={{
+                background: '#8b5cf6',
+                color: '#ffffff',
+                borderRadius: '20px',
+                padding: '2px 8px',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                marginLeft: 'auto'
+              }}>
+                {projects.filter(p => p.status === 'Staged' || p.status === 'Pending Approval' || p.isStaged).length}
+              </span>
+            )}
+          </button>
+
+          <button 
             className={view === 'resourceLoading' ? 'btn-primary' : 'btn-secondary'}
             onClick={() => setView('resourceLoading')}
           >
@@ -270,6 +293,7 @@ function MainApp() {
       <main className="main-content">
         {view === 'form' && permissions.canLogProjects && <ProjectForm onAddProject={handleAddProject} projects={projects} />}
         {view === 'grid' && <ProjectGrid projects={projects} onUpdateProject={handleUpdateProject} onBulkAddProjects={handleBulkAddProjects} onClearProjects={handleClearProjects} onDeleteProjects={handleDeleteProjects} />}
+        {view === 'staging' && <StagingQueue projects={projects} onUpdateProject={handleUpdateProject} onDeleteProjects={handleDeleteProjects} />}
         {view === 'sla' && <SLAMasterModule readOnly={!permissions.canUpdateSLA} />}
         {view === 'scrum' && <ScrumDashboard projects={projects} />}
         {view === 'campaignOps' && <CampaignOpsDashboard projects={projects} />}
