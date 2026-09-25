@@ -1,17 +1,49 @@
 import React, { useState } from 'react';
-import { Layers, CheckCircle2, XCircle, Edit3, ArrowRight, Zap, AlertCircle, UserCheck } from 'lucide-react';
+import { Layers, CheckCircle2, XCircle, Edit3, ArrowRight, Zap, AlertCircle, Clock, Archive, RefreshCw, ShieldAlert } from 'lucide-react';
 
-export default function StagingQueue({ projects = [], onUpdateProject, onDeleteProjects, onPromoteToMain }) {
+export default function StagingQueue({ projects = [], onUpdateProject, onDeleteProjects }) {
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'archive'
   const [selectedStagedIds, setSelectedStagedIds] = useState([]);
   const [editingStagedProject, setEditingStagedProject] = useState(null);
 
-  // Filter projects in Staging Queue
-  const stagedProjects = projects.filter(p => 
+  const RETENTION_DAYS = 7;
+  const nowMs = Date.now();
+
+  // Helper to compute days in staging
+  const getStagingMetrics = (project) => {
+    const stagedTime = project.stagedAt || project.createdAt || project.date;
+    const stagedDate = new Date(stagedTime);
+    const validDate = isNaN(stagedDate.getTime()) ? new Date() : stagedDate;
+    const diffMs = Math.max(0, nowMs - validDate.getTime());
+    const daysInStaging = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.max(0, RETENTION_DAYS - daysInStaging);
+    const isExpired = daysInStaging >= RETENTION_DAYS;
+
+    return { stagedDate: validDate, daysInStaging, daysRemaining, isExpired };
+  };
+
+  // Filter Active Staged vs Archived Staged
+  const allStagedProjects = projects.filter(p => 
     p.status === 'Staged' || 
     p.status === 'Pending Approval' || 
     p.status === 'Staged (Auto-Assigned)' || 
+    p.status === 'Staging Archived' || 
     p.isStaged === true
   );
+
+  const activeStagedProjects = allStagedProjects.filter(p => {
+    if (p.status === 'Staging Archived') return false;
+    const { isExpired } = getStagingMetrics(p);
+    return !isExpired;
+  });
+
+  const archivedStagedProjects = allStagedProjects.filter(p => {
+    if (p.status === 'Staging Archived') return true;
+    const { isExpired } = getStagingMetrics(p);
+    return isExpired;
+  });
+
+  const currentList = activeTab === 'active' ? activeStagedProjects : archivedStagedProjects;
 
   const toggleSelect = (id) => {
     setSelectedStagedIds(prev => 
@@ -20,32 +52,63 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
   };
 
   const handleApproveProject = (project) => {
+    const stgId = project.stagingId || `STG-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+    const prodWfId = project.workfrontProjectId || `WF-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+
     const updated = {
       ...project,
+      stagingId: stgId,
+      workfrontProjectId: prodWfId,
       status: 'In-Developement',
       isStaged: false,
       approvedAt: new Date().toISOString(),
-      remarks: project.remarks ? `${project.remarks} | Approved & Promoted from Staging Queue` : 'Approved & Promoted from Staging Queue'
+      remarks: project.remarks 
+        ? `${project.remarks} | Promoted from Staging (${stgId})`
+        : `Promoted from Staging Queue (${stgId}) to Production (${prodWfId})`
     };
     onUpdateProject(updated);
   };
 
   const handleBulkApprove = () => {
-    const targetIds = selectedStagedIds.length > 0 ? selectedStagedIds : stagedProjects.map(p => p.id);
+    const targetIds = selectedStagedIds.length > 0 ? selectedStagedIds : activeStagedProjects.map(p => p.id);
     if (targetIds.length === 0) return;
 
     targetIds.forEach(id => {
-      const p = stagedProjects.find(item => item.id === id);
+      const p = projects.find(item => item.id === id);
       if (p) {
         handleApproveProject(p);
       }
     });
     setSelectedStagedIds([]);
-    alert(`Successfully approved and moved ${targetIds.length} project(s) to the main Project Module!`);
+    alert(`Successfully approved and promoted ${targetIds.length} staged project(s) to the main Project Module!`);
+  };
+
+  const handleAutoArchiveExpired = () => {
+    let count = 0;
+    allStagedProjects.forEach(p => {
+      const { isExpired } = getStagingMetrics(p);
+      if (isExpired && p.status !== 'Staging Archived') {
+        const updated = {
+          ...p,
+          status: 'Staging Archived',
+          isStaged: false,
+          archivedAt: new Date().toISOString(),
+          remarks: p.remarks ? `${p.remarks} | Auto-archived after 7 days in staging` : 'Auto-archived after 7 days in staging'
+        };
+        onUpdateProject(updated);
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      alert(`Auto-archived ${count} staged project(s) older than 7 days retention limit.`);
+    } else {
+      alert('No expired staged projects found to archive.');
+    }
   };
 
   const handleRejectProject = (project) => {
-    if (window.confirm(`Are you sure you want to reject and remove "${project.projectName}" from Staging?`)) {
+    if (window.confirm(`Are you sure you want to reject "${project.projectName}"?`)) {
       if (onDeleteProjects && project.id) {
         onDeleteProjects([project.id]);
       } else {
@@ -63,87 +126,143 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: '1.5rem',
-        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%)',
         padding: '1.25rem 1.5rem',
         borderRadius: '12px',
-        border: '1px solid rgba(139, 92, 246, 0.3)'
+        border: '1px solid rgba(139, 92, 246, 0.35)'
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
               background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              padding: '0.6rem',
+              padding: '0.65rem',
               borderRadius: '10px',
               display: 'flex',
-              color: '#fff'
+              color: '#fff',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
             }}>
-              <Layers size={22} />
+              <Layers size={24} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.3rem', color: '#f8fafc', fontWeight: 700 }}>
-                Project Staging & Review Module
+              <h2 style={{ margin: 0, fontSize: '1.35rem', color: '#f8fafc', fontWeight: 800 }}>
+                Project Staging & Review Queue
               </h2>
               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Review, verify, and approve auto-assigned projects before moving them live into production
+                Dedicated Staging IDs • 7-Day Auto-Retention Policy • Approval Workflow
               </span>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleAutoArchiveExpired}
+            className="btn-secondary"
+            style={{
+              background: 'rgba(100, 116, 139, 0.15)',
+              color: '#94a3b8',
+              border: '1px solid #475569',
+              borderRadius: '8px',
+              padding: '0.6rem 1rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Auto-archive unapproved staged items older than 7 days"
+          >
+            <Archive size={16} /> Auto-Archive Expired (&gt; 7 Days)
+          </button>
+
           <button
             onClick={handleBulkApprove}
-            disabled={stagedProjects.length === 0}
+            disabled={activeStagedProjects.length === 0}
             style={{
-              background: stagedProjects.length > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#334155',
+              background: activeStagedProjects.length > 0 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#334155',
               color: '#ffffff',
               border: 'none',
               borderRadius: '8px',
               padding: '0.6rem 1.25rem',
               fontWeight: 700,
               fontSize: '0.88rem',
-              cursor: stagedProjects.length > 0 ? 'pointer' : 'not-allowed',
+              cursor: activeStagedProjects.length > 0 ? 'pointer' : 'not-allowed',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              boxShadow: stagedProjects.length > 0 ? '0 4px 12px rgba(16, 185, 129, 0.35)' : 'none'
+              boxShadow: activeStagedProjects.length > 0 ? '0 4px 12px rgba(16, 185, 129, 0.35)' : 'none'
             }}
           >
             <CheckCircle2 size={18} />
-            Approve All Staged ({stagedProjects.length})
+            Approve & Promote Selected ({selectedStagedIds.length || activeStagedProjects.length})
           </button>
         </div>
       </div>
 
-      {/* METRICS DASHBOARD */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
-      }}>
-        <div className="glass-panel" style={{ padding: '1rem 1.25rem', borderLeft: '4px solid #8b5cf6' }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Pending Approvals</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#a5b4fc', marginTop: '0.25rem' }}>{stagedProjects.length}</div>
+      {/* METRICS & TAB SWITCHER */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+        {/* TABS */}
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(15, 23, 42, 0.6)', padding: '4px', borderRadius: '10px', border: '1px solid var(--surface-border)' }}>
+          <button
+            onClick={() => setActiveTab('active')}
+            style={{
+              background: activeTab === 'active' ? 'var(--primary-color)' : 'transparent',
+              color: activeTab === 'active' ? '#fff' : 'var(--text-secondary)',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.25rem',
+              fontSize: '0.88rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Clock size={16} /> Active Staged Queue ({activeStagedProjects.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('archive')}
+            style={{
+              background: activeTab === 'archive' ? '#475569' : 'transparent',
+              color: activeTab === 'archive' ? '#fff' : 'var(--text-secondary)',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.5rem 1.25rem',
+              fontSize: '0.88rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Archive size={16} /> Staging Archive ({archivedStagedProjects.length})
+          </button>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1rem 1.25rem', borderLeft: '4px solid #38bdf8' }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Auto-Assigned Team</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#38bdf8', marginTop: '0.25rem' }}>
-            {stagedProjects.filter(p => p.emailDeveloper || p.campaignBuilder).length}
-          </div>
-        </div>
-
-        <div className="glass-panel" style={{ padding: '1rem 1.25rem', borderLeft: '4px solid #10b981' }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ready to Move</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#10b981', marginTop: '0.25rem' }}>
-            {stagedProjects.length}
-          </div>
+        {/* POLICY INFO BADGE */}
+        <div style={{
+          fontSize: '0.8rem',
+          color: '#a5b4fc',
+          background: 'rgba(99, 102, 241, 0.1)',
+          padding: '0.4rem 0.9rem',
+          borderRadius: '20px',
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem'
+        }}>
+          <Clock size={14} /> 7-Day Auto-Retention Policy Active (Unapproved items archive after 7 days)
         </div>
       </div>
 
       {/* STAGED PROJECTS CARDS */}
-      {stagedProjects.length === 0 ? (
+      {currentList.length === 0 ? (
         <div className="glass-panel" style={{
           textAlign: 'center',
           padding: '3.5rem 2rem',
@@ -161,19 +280,24 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
             margin: '0 auto 1rem auto',
             color: '#8b5cf6'
           }}>
-            <CheckCircle2 size={32} />
+            {activeTab === 'active' ? <CheckCircle2 size={32} /> : <Archive size={32} />}
           </div>
           <h3 style={{ color: '#f8fafc', margin: '0 0 0.5rem 0', fontSize: '1.15rem' }}>
-            No Projects Currently in Staging Queue
+            {activeTab === 'active' ? 'No Projects Currently Pending in Staging' : 'No Archived Staged Projects'}
           </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '480px', margin: '0 auto 1.5rem auto' }}>
-            All auto-assigned projects have been approved and moved to the main Project Module. When new projects are auto-assigned or staged, they will appear here for your review!
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '500px', margin: '0 auto' }}>
+            {activeTab === 'active' 
+              ? 'All auto-assigned projects have been reviewed, approved, and promoted to production. New auto-assigned items will appear here with dedicated Staging IDs (STG-xxxx).' 
+              : 'Staged projects that exceed the 7-day retention limit or get archived will be listed here for historical reference.'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {stagedProjects.map((project) => {
+          {currentList.map((project) => {
             const isSelected = selectedStagedIds.includes(project.id);
+            const { daysInStaging, daysRemaining, isExpired } = getStagingMetrics(project);
+            const stgId = project.stagingId || `STG-${new Date().getFullYear()}-${String(project.id).slice(-4)}`;
+
             return (
               <div
                 key={project.id}
@@ -188,61 +312,85 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelect(project.id)}
-                      style={{ marginTop: '0.3rem', width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
+                    {activeTab === 'active' && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(project.id)}
+                        style={{ marginTop: '0.35rem', width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                    )}
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                        {/* DEDICATED STAGING ID BADGE */}
                         <span style={{
-                          background: 'rgba(139, 92, 246, 0.2)',
-                          color: '#c4b5fd',
-                          border: '1px solid rgba(139, 92, 246, 0.4)',
+                          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                          color: '#ffffff',
+                          borderRadius: '6px',
+                          padding: '3px 10px',
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.5px',
+                          boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)'
+                        }}>
+                          🆔 {stgId}
+                        </span>
+
+                        {/* RETENTION STATUS BADGE */}
+                        <span style={{
+                          background: isExpired ? 'rgba(239, 68, 68, 0.15)' : daysRemaining <= 2 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                          color: isExpired ? '#f87171' : daysRemaining <= 2 ? '#fbbf24' : '#34d399',
+                          border: `1px solid ${isExpired ? 'rgba(239, 68, 68, 0.3)' : daysRemaining <= 2 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
                           borderRadius: '6px',
                           padding: '2px 8px',
                           fontSize: '0.75rem',
-                          fontWeight: 700
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
                         }}>
-                          STAGED FOR REVIEW
+                          <Clock size={12} />
+                          {isExpired ? `Expired (${daysInStaging}d in staging)` : `Staged ${daysInStaging}d ago (${daysRemaining}d left in retention)`}
                         </span>
+
                         <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#f8fafc', fontWeight: 700 }}>
                           {project.projectName || project.taskName || 'Untitled Staged Project'}
                         </h3>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.6rem', fontSize: '0.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                         <span><strong>LOB:</strong> {project.lineOfBusiness || project.lob || 'General'}</span>
                         <span><strong>Type:</strong> {project.typeOfRequest || project.requestType || 'Standard'}</span>
                         <span><strong>Priority:</strong> <span style={{ color: project.priority === 'High' || project.priority === 'Urgent' ? '#f87171' : '#a5b4fc' }}>{project.priority || 'Normal'}</span></span>
                         <span><strong>Requester:</strong> {project.requesterName || project.requestorName || '—'}</span>
-                        <span><strong>Dates:</strong> {project.expectedStartDate || '—'} → {project.expectedEndDate || '—'}</span>
+                        <span><strong>Expected Dates:</strong> {project.expectedStartDate || '—'} → {project.expectedEndDate || '—'}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* ACTION BUTTONS */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => handleApproveProject(project)}
-                      style={{
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
-                      }}
-                    >
-                      <CheckCircle2 size={16} /> Approve & Move to Projects <ArrowRight size={14} />
-                    </button>
+                    {activeTab === 'active' && (
+                      <button
+                        onClick={() => handleApproveProject(project)}
+                        style={{
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '0.55rem 1.1rem',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+                        }}
+                      >
+                        <CheckCircle2 size={16} /> Approve & Promote to Production <ArrowRight size={14} />
+                      </button>
+                    )}
 
                     <button
                       onClick={() => handleRejectProject(project)}
@@ -251,7 +399,7 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
                         color: '#f87171',
                         border: '1px solid rgba(239, 68, 68, 0.3)',
                         borderRadius: '8px',
-                        padding: '0.5rem 0.75rem',
+                        padding: '0.55rem 0.8rem',
                         fontSize: '0.85rem',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -260,12 +408,12 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
                         gap: '0.3rem'
                       }}
                     >
-                      <XCircle size={16} /> Reject
+                      <XCircle size={16} /> {activeTab === 'active' ? 'Reject' : 'Delete Record'}
                     </button>
                   </div>
                 </div>
 
-                {/* PROPOSED AUTO-ASSIGNMENT RESOURCE SUMMARY */}
+                {/* PROPOSED AUTO-ASSIGNED RESOURCE MATRIX */}
                 <div style={{
                   marginTop: '1rem',
                   padding: '0.85rem 1.1rem',

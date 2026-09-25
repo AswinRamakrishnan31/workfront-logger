@@ -286,8 +286,12 @@ export default function ProjectForm({ onAddProject, onUpdateProject, initialData
 
   const handleSubmit = (e, submitToStaging = false) => {
     if (e) e.preventDefault();
+    const stgNum = String(Date.now()).slice(-4);
+    const generatedStagingId = `STG-${new Date().getFullYear()}-${stgNum}`;
     const finalData = {
       ...formData,
+      stagingId: formData.stagingId || (submitToStaging ? generatedStagingId : null),
+      stagedAt: formData.stagedAt || (submitToStaging ? new Date().toISOString() : null),
       status: submitToStaging ? 'Staged' : (formData.status || 'In-Developement'),
       isStaged: submitToStaging
     };
