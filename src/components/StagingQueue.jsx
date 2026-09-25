@@ -148,6 +148,129 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
     setIsMappingModalOpen(false);
   };
 
+  const handleDownloadTemplate = (format = 'xlsx') => {
+    const sampleRows = [
+      {
+        "Project Name": "Q4 Holiday Marketing Promo",
+        "Expected Start Date": new Date().toISOString().split('T')[0],
+        "Expected End Date": new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+        "Status": "Yet to Start",
+        "Email Developer": "Subhasri",
+        "Email QA": "Jagadesh",
+        "Campaign Builder": "Indrajit",
+        "Campaign QA": "Thiyagaraj",
+        "Audience": "Nandha",
+        "CoE": "Sathya",
+        "Priority": "High",
+        "Task Complexity": "Medium Creation",
+        "Type of Request": "Delivery + Campaign",
+        "Line of Business": "Acquisition",
+        "Type of Campaign": "Marketing",
+        "Requester Name": "Alex Smith",
+        "Number of Emails": 2,
+        "Number of Workflows": 1,
+        "Number of SMS": 0,
+        "Number of In-app notifications": 0
+      },
+      {
+        "Project Name": "Account Update Notification",
+        "Expected Start Date": new Date().toISOString().split('T')[0],
+        "Expected End Date": new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+        "Status": "In-Developement",
+        "Email Developer": "Mohanapriya",
+        "Email QA": "Niranjana",
+        "Campaign Builder": "Ambarish",
+        "Campaign QA": "Suwetha",
+        "Audience": "Preeth",
+        "CoE": "Preetha",
+        "Priority": "Normal",
+        "Task Complexity": "Simple Updates",
+        "Type of Request": "Transaction message",
+        "Line of Business": "Service Comms - Account Management",
+        "Type of Campaign": "Service",
+        "Requester Name": "Sarah Jenkins",
+        "Number of Emails": 1,
+        "Number of Workflows": 0,
+        "Number of SMS": 0,
+        "Number of In-app notifications": 1
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(sampleRows);
+    const colWidths = Object.keys(sampleRows[0]).map(key => ({
+      wch: Math.max(key.length + 3, 18)
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const lobOpts = options?.lobOptions || [];
+    const campaignTypeOpts = options?.campaignTypeOptions || [];
+    const priorityOpts = options?.priorityOptions || [];
+    const typeOfRequestOpts = options?.typeOfRequestOptions || [];
+    const taskComplexityOpts = options?.taskComplexityOptions || [];
+    const statusOpts = options?.statusOptions || [];
+    const teamMembersMap = options?.teamMembers || {};
+
+    const emailDevs = teamMembersMap.emailDeveloper || [];
+    const campBuilders = teamMembersMap.campaignBuilder || [];
+    const emailQAs = teamMembersMap.emailQA || [];
+    const campQAs = teamMembersMap.campaignQA || [];
+    const audiences = teamMembersMap.audience || [];
+    const coes = teamMembersMap.coe || [];
+
+    const maxRows = Math.max(
+      lobOpts.length,
+      campaignTypeOpts.length,
+      priorityOpts.length,
+      typeOfRequestOpts.length,
+      taskComplexityOpts.length,
+      statusOpts.length,
+      emailDevs.length,
+      campBuilders.length,
+      emailQAs.length,
+      campQAs.length,
+      audiences.length,
+      coes.length,
+      1
+    );
+
+    const refRows = [];
+    for (let i = 0; i < maxRows; i++) {
+      refRows.push({
+        "Line of Business": lobOpts[i] || "",
+        "Type of Campaign": campaignTypeOpts[i] || "",
+        "Priority": priorityOpts[i] || "",
+        "Type of Request": typeOfRequestOpts[i] || "",
+        "Task Complexity": taskComplexityOpts[i] || "",
+        "Status": statusOpts[i] || "",
+        "Email Developer": emailDevs[i] || "",
+        "Campaign Builder": campBuilders[i] || "",
+        "Email QA": emailQAs[i] || "",
+        "Campaign QA": campQAs[i] || "",
+        "Audience": audiences[i] || "",
+        "CoE": coes[i] || ""
+      });
+    }
+
+    const refWorksheet = XLSX.utils.json_to_sheet(refRows);
+    const refColWidths = Object.keys(refRows[0] || {}).map(key => ({
+      wch: Math.max(key.length + 3, 22)
+    }));
+    refWorksheet['!cols'] = refColWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Project_Template");
+    XLSX.utils.book_append_sheet(workbook, refWorksheet, "Valid_Dropdown_Values");
+
+    if (format === 'csv') {
+      XLSX.writeFile(workbook, "workfront_staging_import_template.csv", { bookType: "csv" });
+      const refWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(refWorkbook, refWorksheet, "Valid_Dropdown_Values");
+      XLSX.writeFile(refWorkbook, "workfront_staging_valid_dropdown_values.csv", { bookType: "csv" });
+    } else {
+      XLSX.writeFile(workbook, "workfront_staging_import_template.xlsx");
+    }
+  };
+
   const RETENTION_DAYS = 7;
   const nowMs = Date.now();
 
@@ -304,6 +427,48 @@ export default function StagingQueue({ projects = [], onUpdateProject, onDeleteP
             ref={fileInputRef}
             onChange={handleFileUpload}
           />
+
+          <button
+            onClick={() => handleDownloadTemplate('xlsx')}
+            className="btn-secondary"
+            style={{
+              background: 'rgba(34, 197, 94, 0.12)',
+              color: '#22c55e',
+              border: '1px solid #22c55e',
+              borderRadius: '8px',
+              padding: '0.6rem 0.9rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Download pre-formatted Excel import template (.xlsx)"
+          >
+            <Download size={16} /> Excel Template
+          </button>
+
+          <button
+            onClick={() => handleDownloadTemplate('csv')}
+            className="btn-secondary"
+            style={{
+              background: 'rgba(168, 85, 247, 0.12)',
+              color: '#c084fc',
+              border: '1px solid #c084fc',
+              borderRadius: '8px',
+              padding: '0.6rem 0.9rem',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+            title="Download pre-formatted CSV import template (.csv)"
+          >
+            <FileSpreadsheet size={16} /> CSV Template
+          </button>
 
           <button
             onClick={() => fileInputRef.current?.click()}
