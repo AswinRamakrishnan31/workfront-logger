@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workfront_secret_db_pass_2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-workfront_logger}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -24,11 +24,11 @@ services:
     container_name: workfront_logger_backend
     restart: always
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-workfront_secret_db_pass_2026}@db:5432/${POSTGRES_DB:-workfront_logger}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-workfront_logger}?schema=public
       PORT: 3001
       NODE_ENV: production
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_random_secret_in_production}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       db:
         condition: service_healthy
